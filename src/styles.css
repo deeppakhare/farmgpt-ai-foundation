@@ -140,6 +140,10 @@
   backdrop-filter: blur(14px) saturate(140%);
 }
 
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 @utility text-gradient {
   background: var(--gradient-primary);
   -webkit-background-clip: text;
