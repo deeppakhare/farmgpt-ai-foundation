@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Sparkles,
   Search,
   MessageSquare,
   ScanLine,
@@ -20,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { useFarmer } from "@/hooks/useFarmer";
 
 const RECENT_CHATS = [
   "Yellow spots on tomato leaves",
@@ -30,18 +29,28 @@ const RECENT_CHATS = [
   "Market price forecast — cotton",
 ];
 
-const NAV = [
-  { to: "/dashboard", label: "FarmGPT", icon: Sparkles },
-  { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
-  { to: "/weather", label: "Weather", icon: CloudSun },
-  { to: "/reports", label: "Reports", icon: FileBarChart2 },
-  { to: "/farm-profile", label: "Farm Profile", icon: Tractor },
-  { to: "/settings", label: "Settings", icon: Settings },
+const GROUPS = [
+  {
+    label: "Tools",
+    items: [
+      { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
+      { to: "/weather", label: "Weather", icon: CloudSun },
+      { to: "/reports", label: "Reports", icon: FileBarChart2 },
+    ],
+  },
+  {
+    label: "Farm",
+    items: [
+      { to: "/farm-profile", label: "Profile", icon: Tractor },
+      { to: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ] as const;
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { name, initials } = useFarmer();
 
   return (
     <aside
@@ -61,80 +70,93 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </button>
       </div>
 
-      <div className="px-3">
-        <Link to="/dashboard" onClick={onNavigate}>
-          <Button className="w-full justify-start gap-2 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95">
-            <Plus className="h-4 w-4" />
-            {!collapsed && <span>New chat</span>}
-          </Button>
-        </Link>
-      </div>
-
-      {!collapsed && (
-        <div className="px-3 pt-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search chats" className="h-9 border-white/5 bg-white/5 pl-8 text-sm" />
-          </div>
-        </div>
-      )}
-
-      {!collapsed && (
-        <div className="px-3 pt-5 pb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Recent
-        </div>
-      )}
-
-      <ScrollArea className="min-h-0 flex-1 px-2">
+      <ScrollArea className="min-h-0 flex-1">
+        {/* Main */}
         {!collapsed && (
-          <div className="space-y-0.5">
-            {RECENT_CHATS.map((c, i) => (
-              <button
-                key={i}
-                className="flex w-full items-center gap-2 truncate rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-              >
-                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{c}</span>
-              </button>
-            ))}
+          <div className="px-3 pt-1 pb-2 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+            Main
+          </div>
+        )}
+        <div className="px-3">
+          <Link to="/dashboard" onClick={onNavigate}>
+            <Button className="w-full justify-start gap-2 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95">
+              <Plus className="h-4 w-4" />
+              {!collapsed && <span>New chat</span>}
+            </Button>
+          </Link>
+        </div>
+
+        {!collapsed && (
+          <div className="px-3 pt-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Search chats" className="h-9 border-white/5 bg-white/5 pl-8 text-sm" />
+            </div>
           </div>
         )}
 
-        <Separator className="my-3 bg-sidebar-border" />
+        {!collapsed && (
+          <>
+            <div className="px-3 pt-4 pb-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+              Recent Chats
+            </div>
+            <div className="space-y-0.5 px-2">
+              {RECENT_CHATS.map((c, i) => (
+                <button
+                  key={i}
+                  className="flex w-full items-center gap-2 truncate rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{c}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-        <nav className="space-y-0.5">
-          {NAV.map((n) => {
-            const active = pathname.startsWith(n.to);
-            const Icon = n.icon;
-            return (
-              <Link
-                key={n.to}
-                to={n.to}
-                onClick={onNavigate}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-                  collapsed && "justify-center px-0",
-                )}
-              >
-                <Icon className={cn("h-4 w-4 shrink-0", active && "text-accent")} />
-                {!collapsed && <span>{n.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Grouped nav */}
+        {GROUPS.map((group) => (
+          <div key={group.label} className="mt-4">
+            {!collapsed && (
+              <div className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                {group.label}
+              </div>
+            )}
+            <nav className="space-y-0.5 px-2">
+              {group.items.map((n) => {
+                const active = pathname.startsWith(n.to);
+                const Icon = n.icon;
+                return (
+                  <Link
+                    key={n.to}
+                    to={n.to}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      active
+                        ? "bg-sidebar-accent text-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                      collapsed && "justify-center px-0",
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4 shrink-0", active && "text-accent")} />
+                    {!collapsed && <span>{n.label}</span>}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
       </ScrollArea>
 
       <div className="border-t border-sidebar-border p-3">
         <div className={cn("flex items-center gap-3 rounded-lg p-2", !collapsed && "hover:bg-sidebar-accent")}>
           <Avatar className="h-9 w-9 ring-2 ring-primary/30">
-            <AvatarFallback className="bg-gradient-primary text-primary-foreground">RK</AvatarFallback>
+            <AvatarFallback className="bg-gradient-primary text-primary-foreground">{initials}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">Ravi Kumar</div>
+              <div className="truncate text-sm font-medium capitalize">{name}</div>
               <div className="truncate text-xs text-muted-foreground">Farmer • Karnataka</div>
             </div>
           )}
