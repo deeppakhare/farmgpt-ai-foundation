@@ -5,6 +5,7 @@ import type { AgentInput, AgentResponse } from "./types";
 export const runWeatherAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: AgentInput) => data)
-  .handler(async (): Promise<AgentResponse> => {
-    return { agent: "weather-agent", content: "Weather agent not yet implemented." };
+  .handler(async ({ data }): Promise<AgentResponse> => {
+    const { runAgent } = await import("./run-agent.server");
+    return runAgent("weather-agent", data);
   });
