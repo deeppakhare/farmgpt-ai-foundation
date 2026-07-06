@@ -14,16 +14,256 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_history: {
+        Row: {
+          agent: string | null
+          created_at: string
+          id: string
+          pinned: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent?: string | null
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent?: string | null
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          agent: string | null
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          metadata: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          agent?: string | null
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          agent?: string | null
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farms: {
+        Row: {
+          country: string | null
+          created_at: string
+          district: string | null
+          farm_size_acres: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          primary_crop: string | null
+          secondary_crop: string | null
+          soil_type: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          village: string | null
+          water_source: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          district?: string | null
+          farm_size_acres?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          primary_crop?: string | null
+          secondary_crop?: string | null
+          soil_type?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          village?: string | null
+          water_source?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          district?: string | null
+          farm_size_acres?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          primary_crop?: string | null
+          secondary_crop?: string | null
+          soil_type?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          village?: string | null
+          water_source?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          preferred_language: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          preferred_language?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          preferred_language?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          data: Json | null
+          file_url: string | null
+          id: string
+          kind: string
+          size_bytes: number | null
+          summary: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          data?: Json | null
+          file_url?: string | null
+          id?: string
+          kind?: string
+          size_bytes?: number | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          data?: Json | null
+          file_url?: string | null
+          id?: string
+          kind?: string
+          size_bytes?: number | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "farmer" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +390,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["farmer", "admin"],
+    },
   },
 } as const
