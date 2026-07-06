@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,32 @@ import { ChatComposer, type Attachment } from "@/components/farmgpt/chat/ChatCom
 import { AssistantMessage, TypingIndicator, UserMessage } from "@/components/farmgpt/chat/Message";
 import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
 import { ChatHistoryPanel } from "@/components/farmgpt/chat/ChatHistoryPanel";
-import { QUICK_PROMPTS, SEED_MESSAGES, type ChatMessage } from "@/lib/chat-mocks";
+import { QUICK_PROMPTS, type ChatMessage } from "@/lib/chat-mocks";
+import { routeIntent } from "@/lib/agents/intent-router.functions";
+import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
+import { runWeatherAgent } from "@/lib/agents/weather-agent.functions";
+import { runMarketAgent } from "@/lib/agents/market-agent.functions";
+import { runGovernmentAgent } from "@/lib/agents/government-agent.functions";
+import type { AgentName } from "@/lib/agents/types";
 
 export const Route = createFileRoute("/_workspace/chat")({
   component: ChatPage,
 });
+
+async function blobUrlToBase64DataUrl(url: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return undefined;
+  }
+}
 
 function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -21,8 +43,21 @@ function ChatPage() {
   const [historyOpen, setHistoryOpen] = useState(true);
   const [activeConv, setActiveConv] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef(false);
 
-  // Rotate quick prompt seed order every 12s on empty state
+  const routeIntentFn = useServerFn(routeIntent);
+  const diseaseFn = useServerFn(runDiseaseAgent);
+  const weatherFn = useServerFn(runWeatherAgent);
+  const marketFn = useServerFn(runMarketAgent);
+  const govFn = useServerFn(runGovernmentAgent);
+
+  const agentMap: Record<Exclude<AgentName, "intent-router">, typeof diseaseFn> = {
+    "disease-agent": diseaseFn,
+    "weather-agent": weatherFn,
+    "market-agent": marketFn,
+    "government-agent": govFn,
+  };
+
   const [rotationSeed, setRotationSeed] = useState(0);
   useEffect(() => {
     if (messages.length > 0) return;
@@ -34,7 +69,7 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, streaming]);
 
-  const send = (text: string, atts: Attachment[]) => {
+  const send = async (text: string, atts: Attachment[]) => {
     if (!text && atts.length === 0) return;
     const userMsg: ChatMessage = {
       id: `u${Date.now()}`,
@@ -45,13 +80,46 @@ function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setPrompt("");
     setStreaming(true);
+    abortRef.current = false;
 
-    // Simulated stream: pick seed assistant reply after delay
-    setTimeout(() => {
-      const assistant = SEED_MESSAGES.find((m) => m.role === "assistant") as ChatMessage;
-      setMessages((prev) => [...prev, { ...assistant, id: `a${Date.now()}` }]);
+    try {
+      const firstImage = atts.find((a) => a.kind === "image" && a.url);
+      const imageUrl = firstImage?.url
+        ? await blobUrlToBase64DataUrl(firstImage.url)
+        : undefined;
+
+      const message = text || "Please analyze the attached image.";
+
+      const { agent } = await routeIntentFn({ data: { message } });
+      if (abortRef.current) return;
+
+      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? diseaseFn;
+      const response = await agentFn({ data: { message, imageUrl } });
+      if (abortRef.current) return;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `a${Date.now()}`,
+          role: "assistant",
+          blocks: [{ kind: "markdown", text: response.content }],
+        },
+      ]);
+    } catch (err) {
+      if (!abortRef.current) {
+        const msg = err instanceof Error ? err.message : "Something went wrong.";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a${Date.now()}`,
+            role: "assistant",
+            blocks: [{ kind: "markdown", text: `⚠️ ${msg}` }],
+          },
+        ]);
+      }
+    } finally {
       setStreaming(false);
-    }, 1400);
+    }
   };
 
   const startNew = () => {
@@ -61,23 +129,23 @@ function ChatPage() {
 
   const selectConv = (id: string) => {
     setActiveConv(id);
-    // Load seed conversation as a demo
-    setMessages(SEED_MESSAGES);
+    setMessages([]);
   };
 
   const regenerate = () => {
-    setMessages((prev) => prev.slice(0, -1));
-    setStreaming(true);
-    setTimeout(() => {
-      const assistant = SEED_MESSAGES.find((m) => m.role === "assistant") as ChatMessage;
-      setMessages((prev) => [...prev, { ...assistant, id: `a${Date.now()}` }]);
-      setStreaming(false);
-    }, 1200);
+    const lastUser = [...messages].reverse().find((m) => m.role === "user") as
+      | Extract<ChatMessage, { role: "user" }>
+      | undefined;
+    if (!lastUser) return;
+    setMessages((prev) => {
+      const idx = prev.findIndex((m) => m.id === lastUser.id);
+      return idx >= 0 ? prev.slice(0, idx) : prev;
+    });
+    void send(lastUser.text, []);
   };
 
   return (
     <div className="flex h-full min-h-0 w-full">
-      {/* History rail */}
       <AnimatePresence initial={false}>
         {historyOpen && (
           <motion.aside
@@ -95,7 +163,6 @@ function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2">
           <Button
@@ -129,7 +196,7 @@ function ChatPage() {
                     key={m.id}
                     m={m}
                     onRegenerate={regenerate}
-                    onFollowup={(q) => send(q, [])}
+                    onFollowup={(q) => void send(q, [])}
                   />
                 ),
               )}
@@ -138,7 +205,6 @@ function ChatPage() {
           )}
         </div>
 
-        {/* Composer + inline quick prompts */}
         <div className="border-t border-white/5 bg-background/60 backdrop-blur">
           <div className="mx-auto w-full max-w-3xl px-4 pt-3 pb-4 md:px-6">
             {messages.length > 0 && !streaming && (
@@ -147,8 +213,11 @@ function ChatPage() {
             <ChatComposer
               value={prompt}
               onChange={setPrompt}
-              onSend={send}
-              onStop={() => setStreaming(false)}
+              onSend={(t, a) => void send(t, a)}
+              onStop={() => {
+                abortRef.current = true;
+                setStreaming(false);
+              }}
               isStreaming={streaming}
               autoFocus
             />
@@ -167,7 +236,6 @@ function ChatPage() {
 }
 
 function QuickChips({ seed, onPick }: { seed: number; onPick: (q: string) => void }) {
-  // rotate window over QUICK_PROMPTS
   const start = seed % QUICK_PROMPTS.length;
   const chips = [...QUICK_PROMPTS.slice(start), ...QUICK_PROMPTS.slice(0, start)].slice(0, 4);
   return (
