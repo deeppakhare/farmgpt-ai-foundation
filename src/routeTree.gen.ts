@@ -9,38 +9,129 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorkspaceRouteImport } from './routes/_workspace'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkspaceWeatherRouteImport } from './routes/_workspace.weather'
+import { Route as WorkspaceSettingsRouteImport } from './routes/_workspace.settings'
+import { Route as WorkspaceReportsRouteImport } from './routes/_workspace.reports'
+import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.farm-profile'
+import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
+import { Route as WorkspaceDashboardRouteImport } from './routes/_workspace.dashboard'
 
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/_workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkspaceWeatherRoute = WorkspaceWeatherRouteImport.update({
+  id: '/weather',
+  path: '/weather',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceSettingsRoute = WorkspaceSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceReportsRoute = WorkspaceReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceFarmProfileRoute = WorkspaceFarmProfileRouteImport.update({
+  id: '/farm-profile',
+  path: '/farm-profile',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceDiseaseScannerRoute = WorkspaceDiseaseScannerRouteImport.update({
+  id: '/disease-scanner',
+  path: '/disease-scanner',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceDashboardRoute = WorkspaceDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof WorkspaceDashboardRoute
+  '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/reports': typeof WorkspaceReportsRoute
+  '/settings': typeof WorkspaceSettingsRoute
+  '/weather': typeof WorkspaceWeatherRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof WorkspaceDashboardRoute
+  '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/reports': typeof WorkspaceReportsRoute
+  '/settings': typeof WorkspaceSettingsRoute
+  '/weather': typeof WorkspaceWeatherRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_workspace': typeof WorkspaceRouteWithChildren
+  '/_workspace/dashboard': typeof WorkspaceDashboardRoute
+  '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/_workspace/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/_workspace/reports': typeof WorkspaceReportsRoute
+  '/_workspace/settings': typeof WorkspaceSettingsRoute
+  '/_workspace/weather': typeof WorkspaceWeatherRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/disease-scanner'
+    | '/farm-profile'
+    | '/reports'
+    | '/settings'
+    | '/weather'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/disease-scanner'
+    | '/farm-profile'
+    | '/reports'
+    | '/settings'
+    | '/weather'
+  id:
+    | '__root__'
+    | '/'
+    | '/_workspace'
+    | '/_workspace/dashboard'
+    | '/_workspace/disease-scanner'
+    | '/_workspace/farm-profile'
+    | '/_workspace/reports'
+    | '/_workspace/settings'
+    | '/_workspace/weather'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  WorkspaceRoute: typeof WorkspaceRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_workspace': {
+      id: '/_workspace'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +139,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_workspace/weather': {
+      id: '/_workspace/weather'
+      path: '/weather'
+      fullPath: '/weather'
+      preLoaderRoute: typeof WorkspaceWeatherRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/settings': {
+      id: '/_workspace/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof WorkspaceSettingsRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/reports': {
+      id: '/_workspace/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof WorkspaceReportsRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/farm-profile': {
+      id: '/_workspace/farm-profile'
+      path: '/farm-profile'
+      fullPath: '/farm-profile'
+      preLoaderRoute: typeof WorkspaceFarmProfileRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/disease-scanner': {
+      id: '/_workspace/disease-scanner'
+      path: '/disease-scanner'
+      fullPath: '/disease-scanner'
+      preLoaderRoute: typeof WorkspaceDiseaseScannerRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/dashboard': {
+      id: '/_workspace/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof WorkspaceDashboardRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
   }
 }
 
+interface WorkspaceRouteChildren {
+  WorkspaceDashboardRoute: typeof WorkspaceDashboardRoute
+  WorkspaceDiseaseScannerRoute: typeof WorkspaceDiseaseScannerRoute
+  WorkspaceFarmProfileRoute: typeof WorkspaceFarmProfileRoute
+  WorkspaceReportsRoute: typeof WorkspaceReportsRoute
+  WorkspaceSettingsRoute: typeof WorkspaceSettingsRoute
+  WorkspaceWeatherRoute: typeof WorkspaceWeatherRoute
+}
+
+const WorkspaceRouteChildren: WorkspaceRouteChildren = {
+  WorkspaceDashboardRoute: WorkspaceDashboardRoute,
+  WorkspaceDiseaseScannerRoute: WorkspaceDiseaseScannerRoute,
+  WorkspaceFarmProfileRoute: WorkspaceFarmProfileRoute,
+  WorkspaceReportsRoute: WorkspaceReportsRoute,
+  WorkspaceSettingsRoute: WorkspaceSettingsRoute,
+  WorkspaceWeatherRoute: WorkspaceWeatherRoute,
+}
+
+const WorkspaceRouteWithChildren = WorkspaceRoute._addFileChildren(
+  WorkspaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  WorkspaceRoute: WorkspaceRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
