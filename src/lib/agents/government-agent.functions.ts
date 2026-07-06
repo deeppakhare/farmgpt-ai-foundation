@@ -5,6 +5,7 @@ import type { AgentInput, AgentResponse } from "./types";
 export const runGovernmentAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: AgentInput) => data)
-  .handler(async (): Promise<AgentResponse> => {
-    return { agent: "government-agent", content: "Government schemes agent not yet implemented." };
+  .handler(async ({ data }): Promise<AgentResponse> => {
+    const { runAgent } = await import("./run-agent.server");
+    return runAgent("government-agent", data);
   });
