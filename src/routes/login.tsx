@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -18,25 +21,63 @@ function GoogleIcon() {
 function Login() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleGoogle() {
+    setGoogleBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message || "Google sign-in failed");
+        setGoogleBusy(false);
+        return;
+      }
+      if (result.redirected) return; // browser navigates away
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+      setGoogleBusy(false);
+    }
+  }
+
+  async function handleEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Welcome back!");
+    navigate({ to: "/dashboard" });
+  }
+
   return (
     <AuthShell
       title="Welcome back"
       subtitle="Sign in to your FarmGPT AI workspace"
       footer={<>Don't have an account? <Link to="/register" className="text-accent hover:underline">Create one</Link></>}
     >
-      <Button variant="outline" className="w-full gap-2"><GoogleIcon />Continue with Google</Button>
+      <Button variant="outline" className="w-full gap-2" onClick={handleGoogle} disabled={googleBusy}>
+        <GoogleIcon />{googleBusy ? "Connecting…" : "Continue with Google"}
+      </Button>
       <div className="my-5 flex items-center gap-3"><Separator className="flex-1" /><span className="text-xs text-muted-foreground">or</span><Separator className="flex-1" /></div>
-      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setBusy(true); setTimeout(() => navigate({ to: "/workspace/dashboard" }), 400); }}>
+      <form className="space-y-4" onSubmit={handleEmail}>
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@farm.io" required />
+          <Input id="email" type="email" placeholder="you@farm.io" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <Link to="/forgot-password" className="text-xs text-accent hover:underline">Forgot?</Link>
           </div>
-          <Input id="password" type="password" placeholder="••••••••" required />
+          <Input id="password" type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Checkbox defaultChecked /> Remember me
