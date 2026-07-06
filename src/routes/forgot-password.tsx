@@ -5,11 +5,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/forgot-password")({ component: Forgot });
 
 function Forgot() {
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSent(true);
+  }
+
   return (
     <AuthShell
       title="Reset your password"
@@ -23,9 +42,9 @@ function Forgot() {
           <p className="mt-1 text-sm text-muted-foreground">If that email exists, we've sent a reset link.</p>
         </div>
       ) : (
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setSent(true); }}>
-          <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" required placeholder="you@farm.io" /></div>
-          <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground shadow-glow">Send reset link</Button>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" required placeholder="you@farm.io" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <Button type="submit" disabled={busy} className="w-full bg-gradient-primary text-primary-foreground shadow-glow">{busy ? "Sending…" : "Send reset link"}</Button>
         </form>
       )}
     </AuthShell>

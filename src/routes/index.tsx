@@ -171,7 +171,7 @@ function Landing() {
             <p className="mt-4 text-muted-foreground">FarmGPT is designed with agronomists, engineers and farmers — so the advice is grounded, timely, and truly useful in the field.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/register"><Button className="bg-gradient-primary text-primary-foreground shadow-glow"><Zap className="mr-2 h-4 w-4" />Try FarmGPT free</Button></Link>
-              <Link to="/workspace/dashboard"><Button variant="outline"><Globe className="mr-2 h-4 w-4" />See the workspace</Button></Link>
+              <Link to="/dashboard"><Button variant="outline"><Globe className="mr-2 h-4 w-4" />See the workspace</Button></Link>
             </div>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2">

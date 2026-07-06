@@ -31,12 +31,12 @@ const RECENT_CHATS = [
 ];
 
 const NAV = [
-  { to: "/workspace/dashboard", label: "FarmGPT", icon: Sparkles },
-  { to: "/workspace/disease-scanner", label: "Disease Scanner", icon: ScanLine },
-  { to: "/workspace/weather", label: "Weather", icon: CloudSun },
-  { to: "/workspace/reports", label: "Reports", icon: FileBarChart2 },
-  { to: "/workspace/farm-profile", label: "Farm Profile", icon: Tractor },
-  { to: "/workspace/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard", label: "FarmGPT", icon: Sparkles },
+  { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
+  { to: "/weather", label: "Weather", icon: CloudSun },
+  { to: "/reports", label: "Reports", icon: FileBarChart2 },
+  { to: "/farm-profile", label: "Farm Profile", icon: Tractor },
+  { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -62,7 +62,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="px-3">
-        <Link to="/workspace/dashboard" onClick={onNavigate}>
+        <Link to="/dashboard" onClick={onNavigate}>
           <Button className="w-full justify-start gap-2 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95">
             <Plus className="h-4 w-4" />
             {!collapsed && <span>New chat</span>}
