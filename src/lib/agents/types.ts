@@ -6,6 +6,14 @@ export type AgentName =
   | "market-agent"
   | "government-agent";
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 export interface AgentInput {
   message: string;
   chatId?: string;
@@ -17,5 +25,5 @@ export interface AgentInput {
 export interface AgentResponse {
   agent: AgentName;
   content: string;
-  data?: Record<string, unknown>;
+  data?: { [key: string]: JsonValue };
 }
