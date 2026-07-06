@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "FarmGPT",
+  "/chat": "Chat",
   "/disease-scanner": "Disease Scanner",
   "/weather": "Weather",
   "/reports": "Reports",

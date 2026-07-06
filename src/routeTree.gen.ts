@@ -21,6 +21,7 @@ import { Route as WorkspaceReportsRouteImport } from './routes/_workspace.report
 import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.farm-profile'
 import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
 import { Route as WorkspaceDashboardRouteImport } from './routes/_workspace.dashboard'
+import { Route as WorkspaceChatRouteImport } from './routes/_workspace.chat'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -81,6 +82,11 @@ const WorkspaceDashboardRoute = WorkspaceDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => WorkspaceRoute,
 } as any)
+const WorkspaceChatRoute = WorkspaceChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/chat': typeof WorkspaceChatRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/chat': typeof WorkspaceChatRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_workspace/chat': typeof WorkspaceChatRoute
   '/_workspace/dashboard': typeof WorkspaceDashboardRoute
   '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/_workspace/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/chat'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-profile'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/chat'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-profile'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/_workspace/chat'
     | '/_workspace/dashboard'
     | '/_workspace/disease-scanner'
     | '/_workspace/farm-profile'
@@ -261,10 +273,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceDashboardRouteImport
       parentRoute: typeof WorkspaceRoute
     }
+    '/_workspace/chat': {
+      id: '/_workspace/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof WorkspaceChatRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
   }
 }
 
 interface WorkspaceRouteChildren {
+  WorkspaceChatRoute: typeof WorkspaceChatRoute
   WorkspaceDashboardRoute: typeof WorkspaceDashboardRoute
   WorkspaceDiseaseScannerRoute: typeof WorkspaceDiseaseScannerRoute
   WorkspaceFarmProfileRoute: typeof WorkspaceFarmProfileRoute
@@ -274,6 +294,7 @@ interface WorkspaceRouteChildren {
 }
 
 const WorkspaceRouteChildren: WorkspaceRouteChildren = {
+  WorkspaceChatRoute: WorkspaceChatRoute,
   WorkspaceDashboardRoute: WorkspaceDashboardRoute,
   WorkspaceDiseaseScannerRoute: WorkspaceDiseaseScannerRoute,
   WorkspaceFarmProfileRoute: WorkspaceFarmProfileRoute,

@@ -78,7 +78,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
         <div className="px-3">
-          <Link to="/dashboard" onClick={onNavigate}>
+          <Link to="/chat" onClick={onNavigate}>
             <Button className="w-full justify-start gap-2 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95">
               <Plus className="h-4 w-4" />
               {!collapsed && <span>New chat</span>}
@@ -102,13 +102,15 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             </div>
             <div className="space-y-0.5 px-2">
               {RECENT_CHATS.map((c, i) => (
-                <button
+                <Link
                   key={i}
+                  to="/chat"
+                  onClick={onNavigate}
                   className="flex w-full items-center gap-2 truncate rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">{c}</span>
-                </button>
+                </Link>
               ))}
             </div>
           </>
