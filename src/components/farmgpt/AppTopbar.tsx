@@ -1,6 +1,6 @@
 import { Bell, Sun, Moon, User, Settings, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -8,14 +8,21 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AppTopbar({ title, onMenu }: { title: string; onMenu?: () => void }) {
   const [dark, setDark] = useState(true);
+  const navigate = useNavigate();
   useEffect(() => {
     const root = document.documentElement;
     if (dark) { root.classList.add("dark"); root.classList.remove("light"); }
     else { root.classList.add("light"); root.classList.remove("dark"); }
   }, [dark]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/login", replace: true });
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl md:px-6">
@@ -47,10 +54,10 @@ export function AppTopbar({ title, onMenu }: { title: string; onMenu?: () => voi
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Ravi Kumar</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link to="/workspace/farm-profile"><User className="mr-2 h-4 w-4" />Farm profile</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/workspace/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/farm-profile"><User className="mr-2 h-4 w-4" />Farm profile</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link to="/login"><LogOut className="mr-2 h-4 w-4" />Sign out</Link></DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleSignOut}><LogOut className="mr-2 h-4 w-4" />Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

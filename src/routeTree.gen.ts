@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -21,6 +22,11 @@ import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.fa
 import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
 import { Route as WorkspaceDashboardRouteImport } from './routes/_workspace.dashboard'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_workspace/dashboard': typeof WorkspaceDashboardRoute
   '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/_workspace/farm-profile': typeof WorkspaceFarmProfileRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-profile'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-profile'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
     | '/_workspace/dashboard'
     | '/_workspace/disease-scanner'
     | '/_workspace/farm-profile'
@@ -160,10 +172,18 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -272,6 +292,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
