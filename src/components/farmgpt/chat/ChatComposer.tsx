@@ -31,7 +31,11 @@ export function ChatComposer({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<any>(null);
   const [atts, setAtts] = useState<Attachment[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [locBusy, setLocBusy] = useState(false);
+
 
   useEffect(() => {
     const el = taRef.current;
