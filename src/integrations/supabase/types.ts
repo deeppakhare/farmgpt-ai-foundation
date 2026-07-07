@@ -88,6 +88,48 @@ export type Database = {
           },
         ]
       }
+      disease_scans: {
+        Row: {
+          blocks: Json
+          confidence: number | null
+          created_at: string
+          crop: string | null
+          disease_name: string
+          emergency_level: string | null
+          id: string
+          image_data_url: string | null
+          intro: string | null
+          severity: string | null
+          user_id: string
+        }
+        Insert: {
+          blocks?: Json
+          confidence?: number | null
+          created_at?: string
+          crop?: string | null
+          disease_name: string
+          emergency_level?: string | null
+          id?: string
+          image_data_url?: string | null
+          intro?: string | null
+          severity?: string | null
+          user_id: string
+        }
+        Update: {
+          blocks?: Json
+          confidence?: number | null
+          created_at?: string
+          crop?: string | null
+          disease_name?: string
+          emergency_level?: string | null
+          id?: string
+          image_data_url?: string | null
+          intro?: string | null
+          severity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       farms: {
         Row: {
           country: string | null
