@@ -137,6 +137,10 @@ function DiseaseScanner() {
     setBlocks([]);
     setIntro(null);
     setError(null);
+    setChatMessages([]);
+    setChatInput("");
+    setDiagImageUrl(null);
+    setDiagContext("");
     if (f) setPreview(URL.createObjectURL(f));
     else setPreview(null);
   }, []);
@@ -145,6 +149,8 @@ function DiseaseScanner() {
     setError(null);
     setBlocks([]);
     setIntro(null);
+    setChatMessages([]);
+    setChatInput("");
 
     if (!file) {
       setError("Please upload a clear photo of the affected crop before diagnosing.");
@@ -162,6 +168,8 @@ function DiseaseScanner() {
       setBlocks(respBlocks as unknown as Block[]);
 
       const vision = extractVisionBlock(respBlocks);
+      setDiagImageUrl(imageUrl);
+      setDiagContext(buildDiagnosisContext(vision));
       if (vision) {
         try {
           await saveFn({
@@ -188,6 +196,39 @@ function DiseaseScanner() {
       setLoading(false);
     }
   }, [file, diseaseFn, saveFn, refreshHistory]);
+
+  const handleSendChat = useCallback(async () => {
+    const q = chatInput.trim();
+    if (!q || chatSending) return;
+    const nextHistory: ChatTurn[] = [...chatMessages, { role: "user", content: q }];
+    setChatMessages(nextHistory);
+    setChatInput("");
+    setChatSending(true);
+    try {
+      const res = await followupFn({
+        data: {
+          question: q,
+          imageUrl: diagImageUrl ?? undefined,
+          diagnosisContext: diagContext || undefined,
+          history: chatMessages.slice(-8),
+        },
+      });
+      setChatMessages([...nextHistory, { role: "assistant", content: res.content }]);
+    } catch (e) {
+      console.error(e);
+      setChatMessages([
+        ...nextHistory,
+        {
+          role: "assistant",
+          content:
+            e instanceof Error ? `Sorry — ${e.message}` : "Sorry, something went wrong.",
+        },
+      ]);
+    } finally {
+      setChatSending(false);
+    }
+  }, [chatInput, chatSending, chatMessages, followupFn, diagImageUrl, diagContext]);
+
 
   const handleDelete = useCallback(
     async (id: string) => {
