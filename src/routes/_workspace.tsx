@@ -11,6 +11,7 @@ const TITLES: Record<string, string> = {
   "/disease-scanner": "Disease Scanner",
   "/weather": "Weather",
   "/farm-planner": "Farm Planner",
+  "/market-intelligence": "Market Intelligence",
   "/reports": "Reports",
   "/farm-profile": "Farm Profile",
   "/settings": "Settings",

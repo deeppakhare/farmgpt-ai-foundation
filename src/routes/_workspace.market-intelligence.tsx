@@ -1,0 +1,457 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  IndianRupee,
+  MapPin,
+  Truck,
+  ShieldAlert,
+  Sparkles,
+  Download,
+  Loader2,
+  Store,
+  BarChart3,
+  Timer,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+  ReferenceLine,
+} from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  generateMarketReport,
+  type MarketInput,
+  type MarketReport,
+} from "@/lib/market/market.functions";
+
+export const Route = createFileRoute("/_workspace/market-intelligence")({
+  component: MarketIntelligencePage,
+});
+
+function inr(n: number) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+function fmtDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+function MarketIntelligencePage() {
+  const run = useServerFn(generateMarketReport);
+  const [form, setForm] = useState<MarketInput>({
+    crop: "Tomato",
+    variety: "Hybrid",
+    state: "Maharashtra",
+    district: "Pune",
+    quantityQuintal: 20,
+  });
+  const [report, setReport] = useState<MarketReport | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const update = <K extends keyof MarketInput>(k: K, v: MarketInput[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const onFetch = async () => {
+    if (!form.crop || !form.state || !form.district || !form.quantityQuintal) {
+      toast.error("Fill crop, state, district and quantity.");
+      return;
+    }
+    setLoading(true);
+    setReport(null);
+    try {
+      const r = await run({ data: form });
+      setReport(r);
+      toast.success("Market report ready!");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to fetch market data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDownloadPdf = async () => {
+    if (!report) return;
+    const { default: jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 40;
+    let y = margin;
+    const line = (t: string, size = 10, bold = false, color: [number, number, number] = [30, 30, 30]) => {
+      if (y > 780) { doc.addPage(); y = margin; }
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(size);
+      doc.setTextColor(...color);
+      const w = doc.splitTextToSize(t, pageW - margin * 2);
+      doc.text(w, margin, y);
+      y += w.length * (size + 3);
+    };
+    const hr = () => { if (y > 780) { doc.addPage(); y = margin; } doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 10; };
+    const gap = (n = 8) => (y += n);
+
+    line("FarmGPT — Market Intelligence Report", 18, true, [20, 100, 60]);
+    line(`${report.crop} (${report.variety})  •  ${report.district}, ${report.state}  •  ${report.quantityQuintal} quintal`, 10, false, [90, 90, 90]);
+    gap();
+    line(`Current price: ${inr(report.currentPrice)}/quintal   (${report.priceChangePct >= 0 ? "+" : ""}${report.priceChangePct}% w/w)`, 11, true);
+    line(`Expected movement (7d): ${report.expectedMovement.summary}`, 10);
+    hr();
+
+    line("AI Recommendation", 14, true, [20, 80, 140]);
+    line(`Action: ${report.advisory.action === "SELL_TODAY" ? "SELL TODAY" : "WAIT"}  (confidence ${report.advisory.confidence}%)`, 11, true,
+      report.advisory.action === "SELL_TODAY" ? [20, 130, 60] : [180, 110, 20]);
+    line(report.advisory.actionReason, 10);
+    gap();
+    line("Price trend analysis:", 10, true); line(report.advisory.trendAnalysis, 10);
+    line(`Best market: ${report.advisory.bestMarket}`, 10, true); line(report.advisory.bestMarketReason, 10);
+    line("Transportation:", 10, true); line(report.advisory.transportation, 10);
+    line(`Expected profit: ${inr(report.advisory.expectedProfit)}`, 10, true);
+    line(report.advisory.profitBreakdown, 10);
+    line("Risk factors:", 10, true);
+    report.advisory.riskFactors.forEach((r) => line(`  • ${r}`, 10));
+    hr();
+
+    line("Nearby Markets", 14, true, [20, 80, 140]);
+    report.nearbyMarkets.forEach((m) =>
+      line(`• ${m.name} — ${inr(m.pricePerQuintal)}/q — ${m.distanceKm} km — demand ${m.demand} — arrivals ${m.arrivalQuintal} q`, 10),
+    );
+    hr();
+
+    line("14-Day Price Trend", 14, true, [20, 80, 140]);
+    report.trend.forEach((t) => line(`  ${fmtDate(t.date)}: ${inr(t.price)}/q`, 9));
+    gap();
+    line("7-Day Forecast", 14, true, [20, 80, 140]);
+    report.forecast.forEach((t) => line(`  ${fmtDate(t.date)}: ${inr(t.price)}/q`, 9));
+
+    doc.save(`Market-${report.crop}-${report.district}.pdf`);
+  };
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+      <header className="mb-6">
+        <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">Market Intelligence</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Live mandi prices, nearby markets, price forecasts and AI-powered selling advice.
+        </p>
+      </header>
+
+      <Card className="glass mb-6 border-0">
+        <CardContent className="p-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Field label="Crop">
+              <Input value={form.crop} onChange={(e) => update("crop", e.target.value)} placeholder="Tomato" />
+            </Field>
+            <Field label="Variety">
+              <Input value={form.variety} onChange={(e) => update("variety", e.target.value)} placeholder="Hybrid" />
+            </Field>
+            <Field label="State">
+              <Input value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="Maharashtra" />
+            </Field>
+            <Field label="District">
+              <Input value={form.district} onChange={(e) => update("district", e.target.value)} placeholder="Pune" />
+            </Field>
+            <Field label="Quantity (quintal)">
+              <Input
+                type="number"
+                min={1}
+                value={form.quantityQuintal}
+                onChange={(e) => update("quantityQuintal", parseFloat(e.target.value) || 0)}
+              />
+            </Field>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button
+              onClick={onFetch}
+              disabled={loading}
+              className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95"
+            >
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BarChart3 className="mr-2 h-4 w-4" />}
+              {loading ? "Fetching market data…" : "Get Market Intelligence"}
+            </Button>
+            {report && (
+              <Button variant="outline" onClick={onDownloadPdf}>
+                <Download className="mr-2 h-4 w-4" /> Download PDF
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {loading && (
+        <div className="rounded-xl border border-border/60 bg-white/[0.02] p-10 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-accent" />
+          <p className="mt-3 text-sm text-muted-foreground">Analysing market prices and generating advisory…</p>
+        </div>
+      )}
+
+      {report && !loading && <ReportView report={report} />}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function ReportView({ report }: { report: MarketReport }) {
+  const est = report.currentPrice * report.quantityQuintal;
+  const TrendIcon =
+    report.expectedMovement.direction === "up" ? TrendingUp :
+    report.expectedMovement.direction === "down" ? TrendingDown : Minus;
+
+  const chartData = [
+    ...report.trend.map((t) => ({ date: fmtDate(t.date), price: t.price, kind: "history" as const })),
+    ...report.forecast.map((t) => ({ date: fmtDate(t.date), forecast: t.price, kind: "forecast" as const })),
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Kpi icon={IndianRupee} label="Current Price" value={`${inr(report.currentPrice)}/q`}
+          sub={`${report.priceChangePct >= 0 ? "+" : ""}${report.priceChangePct}% w/w`}
+          tone={report.priceChangePct >= 0 ? "up" : "down"} />
+        <Kpi icon={TrendIcon} label="Expected Movement (7d)"
+          value={`${report.expectedMovement.percent >= 0 ? "+" : ""}${report.expectedMovement.percent}%`}
+          sub={report.expectedMovement.summary}
+          tone={report.expectedMovement.direction === "up" ? "up" : report.expectedMovement.direction === "down" ? "down" : "flat"} />
+        <Kpi icon={Store} label="Best Market" value={report.bestMarket.name}
+          sub={`${inr(report.bestMarket.pricePerQuintal)}/q • ${report.bestMarket.distanceKm} km`} />
+        <Kpi icon={IndianRupee} label={`Est. Revenue (${report.quantityQuintal} q)`} value={inr(est)}
+          sub={`@ current price`} highlight />
+      </div>
+
+      {/* AI Recommendation */}
+      <Card className={"glass border-0 " + (report.advisory.action === "SELL_TODAY" ? "ring-1 ring-emerald-500/40" : "ring-1 ring-amber-500/40")}>
+        <CardContent className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="rounded-md bg-accent/15 p-1.5 text-accent"><Sparkles className="h-4 w-4" /></div>
+            <div>
+              <h2 className="font-display text-base font-semibold">AI Recommendation</h2>
+              <p className="text-xs text-muted-foreground">Based on live market signals</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge className={
+              report.advisory.action === "SELL_TODAY"
+                ? "gap-1 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/20"
+                : "gap-1 bg-amber-500/15 text-amber-400 hover:bg-amber-500/20"
+            }>
+              {report.advisory.action === "SELL_TODAY" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+              {report.advisory.action === "SELL_TODAY" ? "Sell Today" : "Wait"}
+            </Badge>
+            <Badge variant="outline" className="gap-1"><Timer className="h-3 w-3" />Confidence {report.advisory.confidence}%</Badge>
+          </div>
+          <p className="mt-3 text-sm">{report.advisory.actionReason}</p>
+        </CardContent>
+      </Card>
+
+      {/* Chart */}
+      <Card className="glass border-0">
+        <CardContent className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="rounded-md bg-accent/15 p-1.5 text-accent"><BarChart3 className="h-4 w-4" /></div>
+            <div>
+              <h2 className="font-display text-base font-semibold">Price Trend & Forecast</h2>
+              <p className="text-xs text-muted-foreground">Last 14 days + next 7 days (₹/quintal)</p>
+            </div>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" width={55} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  formatter={(v: number) => [`₹${v}/q`, ""]}
+                />
+                <ReferenceLine x={fmtDate(report.trend[report.trend.length - 1].date)} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" label={{ value: "Today", fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+                <Area type="monotone" dataKey="price" name="History" stroke="hsl(var(--accent))" fill="url(#g1)" strokeWidth={2} />
+                <Area type="monotone" dataKey="forecast" name="Forecast" stroke="hsl(var(--primary))" fill="url(#g2)" strokeWidth={2} strokeDasharray="5 5" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Nearby markets */}
+      <Card className="glass border-0">
+        <CardContent className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="rounded-md bg-accent/15 p-1.5 text-accent"><MapPin className="h-4 w-4" /></div>
+            <div>
+              <h2 className="font-display text-base font-semibold">Nearby Markets</h2>
+              <p className="text-xs text-muted-foreground">Sorted by best price</p>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-border/60">
+            <table className="w-full text-sm">
+              <thead className="bg-white/[0.03] text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left">Market</th>
+                  <th className="px-3 py-2 text-right">Price/q</th>
+                  <th className="px-3 py-2 text-right">Distance</th>
+                  <th className="px-3 py-2 text-right">Demand</th>
+                  <th className="px-3 py-2 text-right">Arrivals</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.nearbyMarkets.map((m, i) => {
+                  const isBest = m.name === report.bestMarket.name;
+                  return (
+                    <tr key={i} className={"border-t border-border/60 " + (isBest ? "bg-emerald-500/5" : "")}>
+                      <td className="px-3 py-2 font-medium">
+                        {m.name} {isBest && <Badge className="ml-2 bg-emerald-500/15 text-emerald-400">Best</Badge>}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums font-semibold">{inr(m.pricePerQuintal)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{m.distanceKm} km</td>
+                      <td className="px-3 py-2 text-right">
+                        <Badge variant="outline" className={
+                          m.demand === "High" ? "text-emerald-400" :
+                          m.demand === "Low" ? "text-rose-400" : "text-amber-400"
+                        }>{m.demand}</Badge>
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{m.arrivalQuintal} q</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI details */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <InfoCard icon={TrendingUp} title="Price Trend Analysis" body={report.advisory.trendAnalysis} />
+        <InfoCard icon={Store} title="Best Market Recommendation"
+          body={`${report.advisory.bestMarket} — ${report.advisory.bestMarketReason}`} />
+        <InfoCard icon={Truck} title="Transportation Advice" body={report.advisory.transportation} />
+        <ProfitCard report={report} />
+      </div>
+
+      {/* Risks */}
+      <Card className="glass border-0">
+        <CardContent className="p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="rounded-md bg-rose-500/15 p-1.5 text-rose-400"><ShieldAlert className="h-4 w-4" /></div>
+            <div>
+              <h2 className="font-display text-base font-semibold">Risk Factors</h2>
+              <p className="text-xs text-muted-foreground">Things that could change the outcome</p>
+            </div>
+          </div>
+          <ul className="grid gap-2 md:grid-cols-2">
+            {report.advisory.riskFactors.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 rounded-lg border border-border/60 bg-white/[0.02] p-3 text-sm">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function Kpi({ icon: Icon, label, value, sub, tone, highlight }: {
+  icon: React.ElementType; label: string; value: string; sub?: string;
+  tone?: "up" | "down" | "flat"; highlight?: boolean;
+}) {
+  const toneClass =
+    tone === "up" ? "text-emerald-400" :
+    tone === "down" ? "text-rose-400" :
+    tone === "flat" ? "text-amber-400" : "";
+  return (
+    <Card className={"glass border-0 " + (highlight ? "ring-1 ring-accent/40" : "")}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Icon className={"h-3.5 w-3.5 " + toneClass} /> {label}
+        </div>
+        <div className={"mt-1 truncate font-display text-xl font-semibold " + (highlight ? "text-accent" : "")}>{value}</div>
+        {sub && <div className={"truncate text-xs " + (toneClass || "text-muted-foreground")}>{sub}</div>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfoCard({ icon: Icon, title, body }: { icon: React.ElementType; title: string; body: string }) {
+  return (
+    <Card className="glass border-0">
+      <CardContent className="p-5">
+        <div className="mb-2 flex items-center gap-2">
+          <div className="rounded-md bg-accent/15 p-1.5 text-accent"><Icon className="h-4 w-4" /></div>
+          <h3 className="font-display text-sm font-semibold">{title}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProfitCard({ report }: { report: MarketReport }) {
+  const gross = report.bestMarket.pricePerQuintal * report.quantityQuintal;
+  return (
+    <Card className="glass border-0 ring-1 ring-accent/30">
+      <CardContent className="p-5">
+        <div className="mb-2 flex items-center gap-2">
+          <div className="rounded-md bg-accent/15 p-1.5 text-accent"><IndianRupee className="h-4 w-4" /></div>
+          <h3 className="font-display text-sm font-semibold">Profit Calculator</h3>
+        </div>
+        <div className="space-y-1 text-sm">
+          <Row label={`Best price × ${report.quantityQuintal} q`} value={inr(gross)} />
+          <Row label="Transport + mandi cess (est.)" value={`− ${inr(gross - report.advisory.expectedProfit)}`} />
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-accent/30 bg-accent/10 px-3 py-2">
+            <span className="text-sm font-semibold">Expected Profit</span>
+            <span className="text-lg font-bold text-accent">{inr(report.advisory.expectedProfit)}</span>
+          </div>
+          <p className="pt-2 text-xs text-muted-foreground">{report.advisory.profitBreakdown}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border/60 py-1.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums">{value}</span>
+    </div>
+  );
+}
