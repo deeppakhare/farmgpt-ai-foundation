@@ -18,6 +18,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
+import { askDiseaseFollowup } from "@/lib/agents/disease-followup.functions";
+import { Input } from "@/components/ui/input";
+import { Send, MessageCircle } from "lucide-react";
 import {
   listDiseaseScans,
   saveDiseaseScan,
