@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
-import { UploadCloud, Camera, ImageIcon, Sparkles, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { UploadCloud, Camera, ImageIcon, Sparkles, X, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
+import { BlockRenderer } from "@/components/farmgpt/chat/RichCards";
+import type { Block } from "@/lib/chat-mocks";
 
 export const Route = createFileRoute("/_workspace/disease-scanner")({
   component: DiseaseScanner,
@@ -15,16 +19,60 @@ const RECENT = [
   { crop: "Cotton", result: "Healthy", date: "2 days ago", severity: "—" },
 ];
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function DiseaseScanner() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [intro, setIntro] = useState<string | null>(null);
+  const [blocks, setBlocks] = useState<Block[]>([]);
+
+  const diseaseFn = useServerFn(runDiseaseAgent);
 
   const handleFile = useCallback((f: File | null) => {
     setFile(f);
+    setBlocks([]);
+    setIntro(null);
+    setError(null);
     if (f) setPreview(URL.createObjectURL(f));
     else setPreview(null);
   }, []);
+
+  const handleDiagnose = useCallback(async () => {
+    setError(null);
+    setBlocks([]);
+    setIntro(null);
+
+    if (!file) {
+      setError("Please upload a clear photo of the affected crop before diagnosing.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const imageUrl = await fileToDataUrl(file);
+      const response = await diseaseFn({
+        data: { message: "Please diagnose this crop image.", imageUrl },
+      });
+      setIntro(response.content ?? null);
+      setBlocks((response.blocks ?? []) as unknown as Block[]);
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [file, diseaseFn]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
@@ -76,9 +124,39 @@ function DiseaseScanner() {
               />
             </label>
 
-            <Button className="mt-4 w-full bg-gradient-primary text-primary-foreground shadow-glow" disabled={!file}>
-              <Sparkles className="mr-2 h-4 w-4" /> Diagnose with FarmGPT
+            <Button
+              onClick={handleDiagnose}
+              className="mt-4 w-full bg-gradient-primary text-primary-foreground shadow-glow"
+              disabled={!file || loading}
+            >
+              {loading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Diagnosing…</>
+              ) : (
+                <><Sparkles className="mr-2 h-4 w-4" /> Diagnose with FarmGPT</>
+              )}
             </Button>
+
+            {!file && !loading && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Please upload a clear photo of the affected crop to start a diagnosis.
+              </p>
+            )}
+
+            {error && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {(intro || blocks.length > 0) && (
+              <div className="mt-5 space-y-4">
+                {intro && <p className="text-sm text-muted-foreground">{intro}</p>}
+                {blocks.map((b, i) => (
+                  <BlockRenderer key={i} block={b} onFollowup={() => {}} />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
