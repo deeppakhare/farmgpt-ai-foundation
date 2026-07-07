@@ -66,6 +66,27 @@ function extractVisionBlock(blocks: JsonValue[]): Record<string, JsonValue> | nu
   return null;
 }
 
+function buildDiagnosisContext(v: Record<string, JsonValue> | null): string {
+  if (!v) return "";
+  const asList = (x: JsonValue): string =>
+    Array.isArray(x) ? x.map((i) => `- ${String(i)}`).join("\n") : "";
+  const lines = [
+    `Disease: ${String(v.diseaseName ?? "Unknown")}`,
+    `Confidence: ${String(v.confidence ?? "?")}%`,
+    `Severity: ${String(v.severity ?? "Unknown")}`,
+    `Emergency: ${String(v.emergencyLevel ?? "Low")}`,
+    v.possibleCause ? `Cause: ${String(v.possibleCause)}` : "",
+    asList(v.symptoms) && `Symptoms:\n${asList(v.symptoms)}`,
+    asList(v.organicTreatment) && `Organic treatment:\n${asList(v.organicTreatment)}`,
+    asList(v.chemicalTreatment) && `Chemical treatment:\n${asList(v.chemicalTreatment)}`,
+    asList(v.preventionTips) && `Prevention:\n${asList(v.preventionTips)}`,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+interface ChatTurn { role: "user" | "assistant"; content: string }
+
+
 function DiseaseScanner() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
