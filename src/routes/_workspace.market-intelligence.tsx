@@ -348,6 +348,14 @@ function MarketIntelligencePage() {
 
     drawFooter();
     doc.save(`Market-${report.crop}-${report.district}.pdf`);
+    const { saveGeneratedReport } = await import("@/lib/reports/save-client");
+    await saveGeneratedReport({
+      title: `Market Report — ${report.crop} (${report.district})`,
+      kind: "market-intelligence",
+      summary: `${report.variety} • ${report.advisory?.action ?? "Advisory"} • Best: ${report.bestMarket?.name ?? "—"}`,
+      doc,
+      activityDetail: `Market intelligence for ${report.crop} in ${report.district}`,
+    });
   };
 
   return (
