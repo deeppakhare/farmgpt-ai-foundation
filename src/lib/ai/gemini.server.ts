@@ -9,6 +9,7 @@ export interface GeminiCallOptions {
   imageMimeType?: string;
   temperature?: number;
   maxOutputTokens?: number;
+  jsonMode?: boolean;
 }
 
 export interface GeminiResult {
