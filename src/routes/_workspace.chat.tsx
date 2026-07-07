@@ -23,11 +23,12 @@ import {
   renameChat,
 } from "@/lib/chat/chat.functions";
 
-type ChatSearch = { c?: string };
+type ChatSearch = { c?: string; q?: string };
 
 export const Route = createFileRoute("/_workspace/chat")({
   validateSearch: (s: Record<string, unknown>): ChatSearch => ({
     c: typeof s.c === "string" ? s.c : undefined,
+    q: typeof s.q === "string" ? s.q : undefined,
   }),
   component: ChatPage,
 });
@@ -48,7 +49,7 @@ async function blobUrlToBase64DataUrl(url: string): Promise<string | undefined> 
 }
 
 function ChatPage() {
-  const { c: chatIdFromUrl } = Route.useSearch();
+  const { c: chatIdFromUrl, q: initialQuery } = Route.useSearch();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
@@ -226,6 +227,18 @@ function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [chatId],
   );
+
+  // Auto-send an initial query passed via ?q=... (e.g. from the dashboard).
+  const autoSentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialQuery) return;
+    if (autoSentRef.current === initialQuery) return;
+    autoSentRef.current = initialQuery;
+    // Strip q from the URL so refresh doesn't resend.
+    void navigate({ to: "/chat", search: { c: chatId }, replace: true });
+    void send(initialQuery, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
 
   const regenerate = () => {
     const lastUser = [...messages].reverse().find((m) => m.role === "user") as

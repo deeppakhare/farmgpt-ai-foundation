@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -26,6 +26,14 @@ export const Route = createFileRoute("/_workspace/dashboard")({
 function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const { name, greeting } = useFarmer();
+  const navigate = useNavigate();
+
+  const sendToChat = (text: string) => {
+    const q = text.trim();
+    if (!q) return;
+    void navigate({ to: "/chat", search: { q } });
+  };
+
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 md:py-8">
@@ -100,11 +108,21 @@ function Dashboard() {
                 <Badge variant="secondary" className="rounded-full bg-white/5">Crop: Tomato</Badge>
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
-                <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
+                <Button
+                  onClick={() => sendToChat("Apply today's AI recommendation to my schedule — delay pesticide spraying until Thursday morning and irrigate tomorrow after 6 PM.")}
+                  className="bg-gradient-primary text-primary-foreground shadow-glow"
+                >
                   Apply to my schedule <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">Ask a follow-up</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => sendToChat("I have a follow-up question about today's AI recommendation about rain and pesticide spraying.")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Ask a follow-up
+                </Button>
               </div>
+
             </CardContent>
           </Card>
         </motion.div>
@@ -203,7 +221,8 @@ function Dashboard() {
             return (
               <motion.button
                 key={a.label}
-                onClick={() => setPrompt(a.prompt)}
+                onClick={() => sendToChat(a.prompt)}
+
                 whileHover={{ y: -2 }}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -222,7 +241,7 @@ function Dashboard() {
 
       {/* Prompt */}
       <section className="mb-6">
-        <PromptBox value={prompt} onChange={setPrompt} />
+        <PromptBox value={prompt} onChange={setPrompt} onSend={sendToChat} />
         <p className="mt-2 text-center text-[11px] text-muted-foreground">
           FarmGPT can make mistakes. Verify important agricultural decisions with an expert.
         </p>
@@ -239,7 +258,8 @@ function Dashboard() {
               {SUGGESTED_QUESTIONS.map((q) => (
                 <li key={q}>
                   <button
-                    onClick={() => setPrompt(q)}
+                    onClick={() => sendToChat(q)}
+
                     className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   >
                     <span className="truncate">{q}</span>
