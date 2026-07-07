@@ -242,17 +242,33 @@ export function ChatComposer({
   );
 }
 
-function ToolBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function ToolBtn({
+  icon: Icon,
+  label,
+  onClick,
+  active,
+  busy,
+}: {
+  icon: any;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  busy?: boolean;
+}) {
   return (
     <Button
       type="button"
       size="sm"
       variant="ghost"
       onClick={onClick}
-      className="h-8 gap-1.5 rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground"
+      className={cn(
+        "h-8 gap-1.5 rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground",
+        active && "bg-rose-500/15 text-rose-300 hover:bg-rose-500/20 hover:text-rose-200",
+      )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className={cn("h-4 w-4", busy && "animate-spin")} />
       <span className="hidden sm:inline">{label}</span>
     </Button>
   );
 }
+
