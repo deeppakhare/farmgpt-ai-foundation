@@ -40,7 +40,7 @@ function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(true);
+  
   const [activeConv, setActiveConv] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
