@@ -128,19 +128,44 @@ async function geocode(place: string): Promise<WeatherLocation | null> {
 
 
 async function reverseGeocode(lat: number, lng: number): Promise<Partial<WeatherLocation>> {
+  // Try Open-Meteo first (fast, but often empty for rural / non-major spots).
   try {
     const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lng}&count=1&language=en&format=json`;
     const res = await fetch(url);
-    if (!res.ok) return {};
-    const j = (await res.json()) as {
-      results?: Array<{ name: string; admin1?: string; country?: string; timezone?: string }>;
-    };
-    const r = j.results?.[0];
-    if (!r) return {};
-    return { name: r.name, region: r.admin1, country: r.country, timezone: r.timezone };
+    if (res.ok) {
+      const j = (await res.json()) as {
+        results?: Array<{ name: string; admin1?: string; country?: string; timezone?: string }>;
+      };
+      const r = j.results?.[0];
+      if (r?.name) {
+        return { name: r.name, region: r.admin1, country: r.country, timezone: r.timezone };
+      }
+    }
   } catch {
-    return {};
+    // fall through
   }
+
+  // Fallback: BigDataCloud free reverse geocoding (no API key, works everywhere).
+  try {
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const j = (await res.json()) as {
+        city?: string;
+        locality?: string;
+        principalSubdivision?: string;
+        countryName?: string;
+      };
+      const name = j.city || j.locality || j.principalSubdivision;
+      if (name) {
+        return { name, region: j.principalSubdivision, country: j.countryName };
+      }
+    }
+  } catch {
+    // fall through
+  }
+
+  return {};
 }
 
 interface OMResponse {
