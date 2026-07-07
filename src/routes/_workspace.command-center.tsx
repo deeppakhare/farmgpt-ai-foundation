@@ -89,6 +89,16 @@ function CommandCenter() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ input: payload, report: r }));
       setReadIds(new Set());
       localStorage.setItem(READ_KEY, JSON.stringify([]));
+      try {
+        const { logActivity } = await import("@/lib/reports/reports.functions");
+        await logActivity({
+          data: {
+            kind: "command-center",
+            title: `Command Brief — ${payload.crop}`,
+            detail: `Farm health score ${r.score}/100 • ${r.scoreLabel}`,
+          },
+        });
+      } catch { /* noop */ }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
