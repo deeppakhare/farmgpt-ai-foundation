@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkspaceWeatherRouteImport } from './routes/_workspace.weather'
 import { Route as WorkspaceSettingsRouteImport } from './routes/_workspace.settings'
 import { Route as WorkspaceReportsRouteImport } from './routes/_workspace.reports'
+import { Route as WorkspaceMarketIntelligenceRouteImport } from './routes/_workspace.market-intelligence'
 import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.farm-profile'
 import { Route as WorkspaceFarmPlannerRouteImport } from './routes/_workspace.farm-planner'
 import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
@@ -68,6 +69,12 @@ const WorkspaceReportsRoute = WorkspaceReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => WorkspaceRoute,
 } as any)
+const WorkspaceMarketIntelligenceRoute =
+  WorkspaceMarketIntelligenceRouteImport.update({
+    id: '/market-intelligence',
+    path: '/market-intelligence',
+    getParentRoute: () => WorkspaceRoute,
+  } as any)
 const WorkspaceFarmProfileRoute = WorkspaceFarmProfileRouteImport.update({
   id: '/farm-profile',
   path: '/farm-profile',
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/market-intelligence': typeof WorkspaceMarketIntelligenceRoute
   '/reports': typeof WorkspaceReportsRoute
   '/settings': typeof WorkspaceSettingsRoute
   '/weather': typeof WorkspaceWeatherRoute
@@ -120,6 +128,7 @@ export interface FileRoutesByTo {
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/market-intelligence': typeof WorkspaceMarketIntelligenceRoute
   '/reports': typeof WorkspaceReportsRoute
   '/settings': typeof WorkspaceSettingsRoute
   '/weather': typeof WorkspaceWeatherRoute
@@ -137,6 +146,7 @@ export interface FileRoutesById {
   '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/_workspace/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/_workspace/farm-profile': typeof WorkspaceFarmProfileRoute
+  '/_workspace/market-intelligence': typeof WorkspaceMarketIntelligenceRoute
   '/_workspace/reports': typeof WorkspaceReportsRoute
   '/_workspace/settings': typeof WorkspaceSettingsRoute
   '/_workspace/weather': typeof WorkspaceWeatherRoute
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/disease-scanner'
     | '/farm-planner'
     | '/farm-profile'
+    | '/market-intelligence'
     | '/reports'
     | '/settings'
     | '/weather'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/disease-scanner'
     | '/farm-planner'
     | '/farm-profile'
+    | '/market-intelligence'
     | '/reports'
     | '/settings'
     | '/weather'
@@ -185,6 +197,7 @@ export interface FileRouteTypes {
     | '/_workspace/disease-scanner'
     | '/_workspace/farm-planner'
     | '/_workspace/farm-profile'
+    | '/_workspace/market-intelligence'
     | '/_workspace/reports'
     | '/_workspace/settings'
     | '/_workspace/weather'
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceReportsRouteImport
       parentRoute: typeof WorkspaceRoute
     }
+    '/_workspace/market-intelligence': {
+      id: '/_workspace/market-intelligence'
+      path: '/market-intelligence'
+      fullPath: '/market-intelligence'
+      preLoaderRoute: typeof WorkspaceMarketIntelligenceRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
     '/_workspace/farm-profile': {
       id: '/_workspace/farm-profile'
       path: '/farm-profile'
@@ -308,6 +328,7 @@ interface WorkspaceRouteChildren {
   WorkspaceDiseaseScannerRoute: typeof WorkspaceDiseaseScannerRoute
   WorkspaceFarmPlannerRoute: typeof WorkspaceFarmPlannerRoute
   WorkspaceFarmProfileRoute: typeof WorkspaceFarmProfileRoute
+  WorkspaceMarketIntelligenceRoute: typeof WorkspaceMarketIntelligenceRoute
   WorkspaceReportsRoute: typeof WorkspaceReportsRoute
   WorkspaceSettingsRoute: typeof WorkspaceSettingsRoute
   WorkspaceWeatherRoute: typeof WorkspaceWeatherRoute
@@ -319,6 +340,7 @@ const WorkspaceRouteChildren: WorkspaceRouteChildren = {
   WorkspaceDiseaseScannerRoute: WorkspaceDiseaseScannerRoute,
   WorkspaceFarmPlannerRoute: WorkspaceFarmPlannerRoute,
   WorkspaceFarmProfileRoute: WorkspaceFarmProfileRoute,
+  WorkspaceMarketIntelligenceRoute: WorkspaceMarketIntelligenceRoute,
   WorkspaceReportsRoute: WorkspaceReportsRoute,
   WorkspaceSettingsRoute: WorkspaceSettingsRoute,
   WorkspaceWeatherRoute: WorkspaceWeatherRoute,
