@@ -231,7 +231,7 @@ function Dashboard() {
 
       {/* Prompt */}
       <section className="mb-6">
-        <PromptBox value={prompt} onChange={setPrompt} />
+        <PromptBox value={prompt} onChange={setPrompt} onSend={sendToChat} />
         <p className="mt-2 text-center text-[11px] text-muted-foreground">
           FarmGPT can make mistakes. Verify important agricultural decisions with an expert.
         </p>
