@@ -143,8 +143,9 @@ function ChatPage() {
           const title = (text || "New conversation").slice(0, 60);
           const created = await createChatFn({ data: { title } });
           activeChatId = created.id;
+          localChatIdsRef.current.add(activeChatId);
           setChatId(activeChatId);
-          void navigate({ to: "/chat", search: { c: activeChatId } });
+          void navigate({ to: "/chat", search: { c: activeChatId }, replace: true });
         }
 
         // Persist user message
