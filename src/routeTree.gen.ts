@@ -19,6 +19,7 @@ import { Route as WorkspaceWeatherRouteImport } from './routes/_workspace.weathe
 import { Route as WorkspaceSettingsRouteImport } from './routes/_workspace.settings'
 import { Route as WorkspaceReportsRouteImport } from './routes/_workspace.reports'
 import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.farm-profile'
+import { Route as WorkspaceFarmPlannerRouteImport } from './routes/_workspace.farm-planner'
 import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
 import { Route as WorkspaceDashboardRouteImport } from './routes/_workspace.dashboard'
 import { Route as WorkspaceChatRouteImport } from './routes/_workspace.chat'
@@ -72,6 +73,11 @@ const WorkspaceFarmProfileRoute = WorkspaceFarmProfileRouteImport.update({
   path: '/farm-profile',
   getParentRoute: () => WorkspaceRoute,
 } as any)
+const WorkspaceFarmPlannerRoute = WorkspaceFarmPlannerRouteImport.update({
+  id: '/farm-planner',
+  path: '/farm-planner',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
 const WorkspaceDiseaseScannerRoute = WorkspaceDiseaseScannerRouteImport.update({
   id: '/disease-scanner',
   path: '/disease-scanner',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof WorkspaceChatRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
   '/reports': typeof WorkspaceReportsRoute
   '/settings': typeof WorkspaceSettingsRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/chat': typeof WorkspaceChatRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/farm-profile': typeof WorkspaceFarmProfileRoute
   '/reports': typeof WorkspaceReportsRoute
   '/settings': typeof WorkspaceSettingsRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/_workspace/chat': typeof WorkspaceChatRoute
   '/_workspace/dashboard': typeof WorkspaceDashboardRoute
   '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
+  '/_workspace/farm-planner': typeof WorkspaceFarmPlannerRoute
   '/_workspace/farm-profile': typeof WorkspaceFarmProfileRoute
   '/_workspace/reports': typeof WorkspaceReportsRoute
   '/_workspace/settings': typeof WorkspaceSettingsRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/dashboard'
     | '/disease-scanner'
+    | '/farm-planner'
     | '/farm-profile'
     | '/reports'
     | '/settings'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/dashboard'
     | '/disease-scanner'
+    | '/farm-planner'
     | '/farm-profile'
     | '/reports'
     | '/settings'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_workspace/chat'
     | '/_workspace/dashboard'
     | '/_workspace/disease-scanner'
+    | '/_workspace/farm-planner'
     | '/_workspace/farm-profile'
     | '/_workspace/reports'
     | '/_workspace/settings'
@@ -259,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceFarmProfileRouteImport
       parentRoute: typeof WorkspaceRoute
     }
+    '/_workspace/farm-planner': {
+      id: '/_workspace/farm-planner'
+      path: '/farm-planner'
+      fullPath: '/farm-planner'
+      preLoaderRoute: typeof WorkspaceFarmPlannerRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
     '/_workspace/disease-scanner': {
       id: '/_workspace/disease-scanner'
       path: '/disease-scanner'
@@ -287,6 +306,7 @@ interface WorkspaceRouteChildren {
   WorkspaceChatRoute: typeof WorkspaceChatRoute
   WorkspaceDashboardRoute: typeof WorkspaceDashboardRoute
   WorkspaceDiseaseScannerRoute: typeof WorkspaceDiseaseScannerRoute
+  WorkspaceFarmPlannerRoute: typeof WorkspaceFarmPlannerRoute
   WorkspaceFarmProfileRoute: typeof WorkspaceFarmProfileRoute
   WorkspaceReportsRoute: typeof WorkspaceReportsRoute
   WorkspaceSettingsRoute: typeof WorkspaceSettingsRoute
@@ -297,6 +317,7 @@ const WorkspaceRouteChildren: WorkspaceRouteChildren = {
   WorkspaceChatRoute: WorkspaceChatRoute,
   WorkspaceDashboardRoute: WorkspaceDashboardRoute,
   WorkspaceDiseaseScannerRoute: WorkspaceDiseaseScannerRoute,
+  WorkspaceFarmPlannerRoute: WorkspaceFarmPlannerRoute,
   WorkspaceFarmProfileRoute: WorkspaceFarmProfileRoute,
   WorkspaceReportsRoute: WorkspaceReportsRoute,
   WorkspaceSettingsRoute: WorkspaceSettingsRoute,
