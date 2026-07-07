@@ -211,7 +211,8 @@ function Dashboard() {
             return (
               <motion.button
                 key={a.label}
-                onClick={() => setPrompt(a.prompt)}
+                onClick={() => sendToChat(a.prompt)}
+
                 whileHover={{ y: -2 }}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
