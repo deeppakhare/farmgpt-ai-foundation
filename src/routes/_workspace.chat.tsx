@@ -9,7 +9,7 @@ import { ChatComposer, type Attachment } from "@/components/farmgpt/chat/ChatCom
 import { AssistantMessage, TypingIndicator, UserMessage } from "@/components/farmgpt/chat/Message";
 import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
 import { ChatHistoryPanel } from "@/components/farmgpt/chat/ChatHistoryPanel";
-import { QUICK_PROMPTS, type ChatMessage } from "@/lib/chat-mocks";
+import { QUICK_PROMPTS, type Block, type ChatMessage } from "@/lib/chat-mocks";
 import { routeIntent } from "@/lib/agents/intent-router.functions";
 import { runGeneralAgent } from "@/lib/agents/general-agent.functions";
 import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
