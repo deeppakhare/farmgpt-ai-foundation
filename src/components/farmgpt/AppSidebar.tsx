@@ -4,6 +4,7 @@ import {
   MessageSquare,
   ScanLine,
   CloudSun,
+  CalendarRange,
   FileBarChart2,
   Tractor,
   Settings,
@@ -35,6 +36,7 @@ const GROUPS = [
     items: [
       { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
       { to: "/weather", label: "Weather", icon: CloudSun },
+      { to: "/farm-planner", label: "Farm Planner", icon: CalendarRange },
       { to: "/reports", label: "Reports", icon: FileBarChart2 },
     ],
   },

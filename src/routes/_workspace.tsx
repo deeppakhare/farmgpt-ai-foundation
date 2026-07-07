@@ -10,6 +10,7 @@ const TITLES: Record<string, string> = {
   "/chat": "Chat",
   "/disease-scanner": "Disease Scanner",
   "/weather": "Weather",
+  "/farm-planner": "Farm Planner",
   "/reports": "Reports",
   "/farm-profile": "Farm Profile",
   "/settings": "Settings",
