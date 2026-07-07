@@ -100,13 +100,22 @@ function DiseaseScanner() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selected, setSelected] = useState<DiseaseScanRow | null>(null);
 
+  // Follow-up chat state (scoped to the current diagnosis)
+  const [chatMessages, setChatMessages] = useState<ChatTurn[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [diagImageUrl, setDiagImageUrl] = useState<string | null>(null);
+  const [diagContext, setDiagContext] = useState<string>("");
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const diseaseFn = useServerFn(runDiseaseAgent);
+  const followupFn = useServerFn(askDiseaseFollowup);
   const listFn = useServerFn(listDiseaseScans);
   const saveFn = useServerFn(saveDiseaseScan);
   const deleteFn = useServerFn(deleteDiseaseScan);
+
 
   const refreshHistory = useCallback(async () => {
     try {
