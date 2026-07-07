@@ -1,7 +1,5 @@
-// Server-only Gemini helper. Do NOT import from client code.
-// Uses the official @google/genai SDK with GEMINI_API_KEY.
-
-import { GoogleGenAI } from "@google/genai";
+// Server-only Gemini helper via Lovable AI Gateway.
+// Uses LOVABLE_API_KEY (auto-provisioned) — no Google Cloud setup required.
 
 export interface GeminiCallOptions {
   model?: string;
@@ -18,49 +16,59 @@ export interface GeminiResult {
   raw?: unknown;
 }
 
-export function getGeminiApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("GEMINI_API_KEY is not set");
+const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+function getApiKey(): string {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("LOVABLE_API_KEY is not set");
   return key;
 }
 
-let cachedClient: GoogleGenAI | null = null;
-function getClient(): GoogleGenAI {
-  if (!cachedClient) {
-    cachedClient = new GoogleGenAI({ apiKey: getGeminiApiKey() });
-  }
-  return cachedClient;
-}
+type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
 
 /**
- * Call Gemini and return the generated text.
+ * Call Gemini via the Lovable AI Gateway and return the generated text.
  */
 export async function callGemini(opts: GeminiCallOptions): Promise<GeminiResult> {
-  const client = getClient();
-  const model = opts.model ?? "gemini-2.5-flash";
+  const model = opts.model ?? "google/gemini-3-flash-preview";
 
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: opts.prompt },
-  ];
+  const userContent: ContentPart[] = [{ type: "text", text: opts.prompt }];
   if (opts.imageBase64) {
-    parts.push({
-      inlineData: {
-        mimeType: opts.imageMimeType ?? "image/jpeg",
-        data: opts.imageBase64,
-      },
+    const mime = opts.imageMimeType ?? "image/jpeg";
+    userContent.push({
+      type: "image_url",
+      image_url: { url: `data:${mime};base64,${opts.imageBase64}` },
     });
   }
 
-  const response = await client.models.generateContent({
-    model,
-    contents: [{ role: "user", parts }],
-    config: {
-      ...(opts.system ? { systemInstruction: opts.system } : {}),
-      ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
-      ...(opts.maxOutputTokens !== undefined ? { maxOutputTokens: opts.maxOutputTokens } : {}),
+  const messages: Array<{ role: string; content: string | ContentPart[] }> = [];
+  if (opts.system) messages.push({ role: "system", content: opts.system });
+  messages.push({ role: "user", content: userContent });
+
+  const response = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getApiKey()}`,
     },
+    body: JSON.stringify({
+      model,
+      messages,
+      ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
+      ...(opts.maxOutputTokens !== undefined ? { max_tokens: opts.maxOutputTokens } : {}),
+    }),
   });
 
-  const text = response.text ?? "";
-  return { text, raw: response };
+  if (!response.ok) {
+    const errBody = await response.text();
+    throw new Error(`Lovable AI Gateway request failed [${response.status}]: ${errBody}`);
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const text = data.choices?.[0]?.message?.content ?? "";
+  return { text, raw: data };
 }
