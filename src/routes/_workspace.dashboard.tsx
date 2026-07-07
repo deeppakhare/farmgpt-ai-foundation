@@ -248,7 +248,8 @@ function Dashboard() {
               {SUGGESTED_QUESTIONS.map((q) => (
                 <li key={q}>
                   <button
-                    onClick={() => setPrompt(q)}
+                    onClick={() => sendToChat(q)}
+
                     className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   >
                     <span className="truncate">{q}</span>
