@@ -96,7 +96,10 @@ function ChatPage() {
 
       const message = text || "Please analyze the attached image.";
 
-      const { agent } = await routeIntentFn({ data: { message } });
+      // If the user attached an image, always route to the vision disease agent.
+      const agent = imageUrl
+        ? ("disease-agent" as const)
+        : (await routeIntentFn({ data: { message } })).agent;
       if (abortRef.current) return;
 
       const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
