@@ -37,6 +37,9 @@ function DiseaseScanner() {
   const [intro, setIntro] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+
   const diseaseFn = useServerFn(runDiseaseAgent);
 
   const handleFile = useCallback((f: File | null) => {
