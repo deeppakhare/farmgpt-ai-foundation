@@ -23,11 +23,12 @@ import {
   renameChat,
 } from "@/lib/chat/chat.functions";
 
-type ChatSearch = { c?: string };
+type ChatSearch = { c?: string; q?: string };
 
 export const Route = createFileRoute("/_workspace/chat")({
   validateSearch: (s: Record<string, unknown>): ChatSearch => ({
     c: typeof s.c === "string" ? s.c : undefined,
+    q: typeof s.q === "string" ? s.q : undefined,
   }),
   component: ChatPage,
 });
