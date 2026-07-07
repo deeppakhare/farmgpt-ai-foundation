@@ -184,7 +184,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
         <div className={cn("px-3", collapsed && "pt-4")}>
-          <Link to="/chat" onClick={onNavigate}>
+          <Link to="/chat" search={{}} onClick={onNavigate}>
             <Button className="w-full justify-start gap-2 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-95">
               <Plus className="h-4 w-4" />
               {!collapsed && <span>New chat</span>}
@@ -196,32 +196,85 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <div className="px-3 pt-3">
             <div className="relative">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search chats" className="h-9 border-white/5 bg-white/5 pl-8 text-sm" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search chats…"
+                className="h-9 border-white/5 bg-white/5 pl-8 text-sm"
+              />
+              {searching && (
+                <Loader2 className="absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
             </div>
           </div>
         )}
 
         {!collapsed && (
           <>
-            <div className="px-3 pt-4 pb-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Recent Chats
+            <div className="flex items-center justify-between px-3 pt-4 pb-1.5">
+              <div className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                {results ? `Results (${displayed.length})` : "Recent Chats"}
+              </div>
+              {chatsLoading && !results && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
             </div>
             <div className="space-y-0.5 px-2 pb-2">
-              {RECENT_CHATS.map((c, i) => (
-                <Link
-                  key={i}
-                  to="/chat"
-                  onClick={onNavigate}
-                  className="flex w-full items-center gap-2 truncate rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                >
-                  <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{c}</span>
-                </Link>
-              ))}
+              {displayed.length === 0 && !chatsLoading && (
+                <div className="rounded-lg px-2.5 py-3 text-xs text-muted-foreground">
+                  {results
+                    ? `No chats match "${query}".`
+                    : "No conversations yet. Ask FarmGPT anything to get started."}
+                </div>
+              )}
+              {displayed.map((c) => {
+                const isActive = c.id === activeChatId;
+                return (
+                  <div
+                    key={c.id}
+                    className={cn(
+                      "group flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground",
+                    )}
+                  >
+                    <MessageSquare
+                      className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", isActive && "text-accent")}
+                    />
+                    <button
+                      onClick={() => {
+                        void navigate({ to: "/chat", search: { c: c.id } });
+                        onNavigate?.();
+                      }}
+                      className="min-w-0 flex-1 text-left"
+                      title={c.title}
+                    >
+                      <div className="truncate">{c.title || "Untitled chat"}</div>
+                      {c.preview && (
+                        <div className="mt-0.5 truncate text-[11px] text-muted-foreground/80">
+                          {c.preview}
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDelete(c.id);
+                      }}
+                      className="rounded p-1 text-muted-foreground opacity-0 hover:bg-white/10 hover:text-rose-300 group-hover:opacity-100"
+                      aria-label="Delete conversation"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
       </ScrollArea>
+
 
       {/* Farm — pinned above user footer */}
       <div className="border-t border-sidebar-border pt-2 pb-1">
