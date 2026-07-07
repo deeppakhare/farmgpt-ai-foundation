@@ -66,7 +66,7 @@ export const saveDiseaseScan = createServerFn({ method: "POST" })
         confidence: data.confidence ?? null,
         emergency_level: data.emergencyLevel ?? null,
         intro: data.intro ?? null,
-        blocks: data.blocks as unknown as object,
+        blocks: data.blocks as never,
         image_data_url: data.imageDataUrl ?? null,
       })
       .select("id")
