@@ -26,6 +26,14 @@ export const Route = createFileRoute("/_workspace/dashboard")({
 function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const { name, greeting } = useFarmer();
+  const navigate = useNavigate();
+
+  const sendToChat = (text: string) => {
+    const q = text.trim();
+    if (!q) return;
+    void navigate({ to: "/chat", search: { q } });
+  };
+
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 md:py-8">
