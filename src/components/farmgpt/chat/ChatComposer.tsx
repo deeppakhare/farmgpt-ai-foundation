@@ -178,10 +178,11 @@ export function ChatComposer({
 
       <div className="flex items-center justify-between gap-2 px-1 pt-1">
         <div className="flex flex-wrap items-center gap-1">
-          <ToolBtn onClick={() => imgRef.current?.click()} icon={ImagePlus} label="Image" />
+          <ToolBtn onClick={() => imgRef.current?.click()} icon={ImagePlus} label="Photo" />
           <ToolBtn onClick={() => pdfRef.current?.click()} icon={FileText} label="PDF" />
-          <ToolBtn icon={Mic} label="Voice" />
-          <ToolBtn icon={MapPin} label="Location" />
+          <ToolBtn onClick={toggleVoice} icon={recording ? Square : Mic} label={recording ? "Stop" : "Voice"} active={recording} />
+          <ToolBtn onClick={addLocation} icon={locBusy ? Loader2 : MapPin} label="Location" busy={locBusy} />
+
           <input
             ref={imgRef}
             type="file"
