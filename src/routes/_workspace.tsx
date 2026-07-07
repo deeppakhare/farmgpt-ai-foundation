@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 const TITLES: Record<string, string> = {
   "/dashboard": "FarmGPT",
   "/chat": "Chat",
+  "/command-center": "Command Center",
   "/disease-scanner": "Disease Scanner",
   "/weather": "Weather",
   "/farm-planner": "Farm Planner",
@@ -16,6 +17,7 @@ const TITLES: Record<string, string> = {
   "/farm-profile": "Farm Profile",
   "/settings": "Settings",
 };
+
 
 export const Route = createFileRoute("/_workspace")({
   ssr: false,

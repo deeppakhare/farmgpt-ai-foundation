@@ -13,6 +13,8 @@ import {
   Plus,
   ChevronsLeft,
   ChevronsRight,
+  LayoutDashboard,
+
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -35,6 +37,7 @@ const GROUPS = [
   {
     label: "Tools",
     items: [
+      { to: "/command-center", label: "Command Center", icon: LayoutDashboard },
       { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
       { to: "/weather", label: "Weather", icon: CloudSun },
       { to: "/farm-planner", label: "Farm Planner", icon: CalendarRange },
@@ -42,6 +45,7 @@ const GROUPS = [
       { to: "/reports", label: "Reports", icon: FileBarChart2 },
     ],
   },
+
   {
     label: "Farm",
     items: [
