@@ -99,7 +99,7 @@ function ChatPage() {
       const { agent } = await routeIntentFn({ data: { message } });
       if (abortRef.current) return;
 
-      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? diseaseFn;
+      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
       const response = await agentFn({ data: { message, imageUrl } });
       if (abortRef.current) return;
 
