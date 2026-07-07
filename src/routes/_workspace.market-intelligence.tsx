@@ -502,8 +502,18 @@ function ReportView({ report }: { report: MarketReport }) {
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                 <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" width={55} />
                 <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => [`₹${v}/q`, ""]}
+                  contentStyle={{
+                    background: "rgba(15, 23, 42, 0.95)",
+                    border: "1px solid rgba(148, 163, 184, 0.3)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "#f8fafc",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                  }}
+                  labelStyle={{ color: "#f8fafc", fontWeight: 600, marginBottom: 4 }}
+                  itemStyle={{ color: "#e2e8f0" }}
+                  cursor={{ stroke: "rgba(148,163,184,0.4)", strokeWidth: 1 }}
+                  formatter={(v: number, name: string) => [`₹${v}/q`, name]}
                 />
                 <ReferenceLine x={fmtDate(report.trend[report.trend.length - 1].date)} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" label={{ value: "Today", fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
                 <Area type="monotone" dataKey="price" name="History" stroke="hsl(var(--accent))" fill="url(#g1)" strokeWidth={2} />
