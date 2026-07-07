@@ -1,10 +1,12 @@
 // Shared types for FarmGPT AI agents.
 export type AgentName =
   | "intent-router"
+  | "general-agent"
   | "disease-agent"
   | "weather-agent"
   | "market-agent"
-  | "government-agent";
+  | "government-agent"
+  | "fertilizer-agent";
 
 export type JsonValue =
   | string

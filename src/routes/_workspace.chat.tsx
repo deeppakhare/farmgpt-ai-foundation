@@ -11,10 +11,12 @@ import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
 import { ChatHistoryPanel } from "@/components/farmgpt/chat/ChatHistoryPanel";
 import { QUICK_PROMPTS, type ChatMessage } from "@/lib/chat-mocks";
 import { routeIntent } from "@/lib/agents/intent-router.functions";
+import { runGeneralAgent } from "@/lib/agents/general-agent.functions";
 import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
 import { runWeatherAgent } from "@/lib/agents/weather-agent.functions";
 import { runMarketAgent } from "@/lib/agents/market-agent.functions";
 import { runGovernmentAgent } from "@/lib/agents/government-agent.functions";
+import { runFertilizerAgent } from "@/lib/agents/fertilizer-agent.functions";
 import type { AgentName } from "@/lib/agents/types";
 
 export const Route = createFileRoute("/_workspace/chat")({
@@ -46,16 +48,20 @@ function ChatPage() {
   const abortRef = useRef(false);
 
   const routeIntentFn = useServerFn(routeIntent);
+  const generalFn = useServerFn(runGeneralAgent);
   const diseaseFn = useServerFn(runDiseaseAgent);
   const weatherFn = useServerFn(runWeatherAgent);
   const marketFn = useServerFn(runMarketAgent);
   const govFn = useServerFn(runGovernmentAgent);
+  const fertilizerFn = useServerFn(runFertilizerAgent);
 
   const agentMap: Record<Exclude<AgentName, "intent-router">, typeof diseaseFn> = {
+    "general-agent": generalFn,
     "disease-agent": diseaseFn,
     "weather-agent": weatherFn,
     "market-agent": marketFn,
     "government-agent": govFn,
+    "fertilizer-agent": fertilizerFn,
   };
 
   const [rotationSeed, setRotationSeed] = useState(0);
@@ -93,7 +99,7 @@ function ChatPage() {
       const { agent } = await routeIntentFn({ data: { message } });
       if (abortRef.current) return;
 
-      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? diseaseFn;
+      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
       const response = await agentFn({ data: { message, imageUrl } });
       if (abortRef.current) return;
 
