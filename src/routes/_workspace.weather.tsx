@@ -170,6 +170,8 @@ function ActivityList({ icon: Icon, title, items }: { icon: React.ComponentType<
 
 // ─── page ─────────────────────────────────────────────────────────────────
 
+const SAVED_PLACE_KEY = "farmgpt.weather.savedPlace";
+
 function WeatherPage() {
   const weatherFn = useServerFn(getWeatherIntelligence);
   const [data, setData] = useState<WeatherIntelResult | null>(null);
@@ -177,6 +179,7 @@ function WeatherPage() {
   const [error, setError] = useState<string | null>(null);
   const [placeInput, setPlaceInput] = useState("");
   const [usingGeo, setUsingGeo] = useState(false);
+  const [savedPlace, setSavedPlace] = useState<string | null>(null);
 
   const load = useCallback(
     async (args: { lat?: number; lng?: number; place?: string }) => {
@@ -195,8 +198,14 @@ function WeatherPage() {
     [weatherFn],
   );
 
-  // Always try to use the user's live location on page visit / refresh.
+  // On visit: use saved location if any, otherwise fall back to live geolocation.
   useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem(SAVED_PLACE_KEY) : null;
+    if (saved) {
+      setSavedPlace(saved);
+      void load({ place: saved });
+      return;
+    }
     if (!navigator.geolocation) {
       setError("Your browser doesn't support location access. Search a place to continue.");
       setLoading(false);
@@ -208,12 +217,11 @@ function WeatherPage() {
         void load({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
       (err) => {
-        // Permission denied / unavailable — don't silently fall back to a hardcoded city.
         setLoading(false);
         setError(
           err.code === err.PERMISSION_DENIED
-            ? "Location access blocked. Enable location in your browser to see weather for your area, or search a place below."
-            : "Couldn't detect your location. Search a place below to continue.",
+            ? "Location access blocked. Enable location or search your place / PIN code below."
+            : "Couldn't detect your location. Search your place or PIN code below.",
         );
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
@@ -226,7 +234,26 @@ function WeatherPage() {
     const p = placeInput.trim();
     if (!p) return;
     setUsingGeo(false);
+    localStorage.setItem(SAVED_PLACE_KEY, p);
+    setSavedPlace(p);
+    setPlaceInput("");
     void load({ place: p });
+  };
+
+  const handleClearSaved = () => {
+    localStorage.removeItem(SAVED_PLACE_KEY);
+    setSavedPlace(null);
+    setUsingGeo(false);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUsingGeo(true);
+          void load({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => void load({}),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      );
+    }
   };
 
   const advisory: WeatherAdvisory | null = data?.advisory ?? null;
