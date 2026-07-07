@@ -103,12 +103,16 @@ function ChatPage() {
       const response = await agentFn({ data: { message, imageUrl } });
       if (abortRef.current) return;
 
+      const extraBlocks = Array.isArray(response.blocks) ? (response.blocks as Block[]) : [];
+      const blocks: Block[] = [];
+      if (response.content) blocks.push({ kind: "markdown", text: response.content });
+      blocks.push(...extraBlocks);
       setMessages((prev) => [
         ...prev,
         {
           id: `a${Date.now()}`,
           role: "assistant",
-          blocks: [{ kind: "markdown", text: response.content }],
+          blocks: blocks.length ? blocks : [{ kind: "markdown", text: "" }],
         },
       ]);
     } catch (err) {
