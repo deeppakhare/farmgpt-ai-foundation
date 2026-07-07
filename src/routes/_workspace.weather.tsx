@@ -270,29 +270,37 @@ function WeatherPage() {
               {data.location.name}
               {data.location.region ? `, ${data.location.region}` : ""}
               {data.location.country ? `, ${data.location.country}` : ""}
-              {usingGeo && <span className="ml-2 text-xs text-accent">• auto-detected</span>}
+              {savedPlace && <span className="ml-2 text-xs text-accent">• saved</span>}
+              {!savedPlace && usingGeo && <span className="ml-2 text-xs text-accent">• auto-detected</span>}
             </span>
           ) : (
             <span>Detecting your location…</span>
           )}
         </div>
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
+        <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={placeInput}
               onChange={(e) => setPlaceInput(e.target.value)}
-              placeholder="Search city or village…"
+              placeholder="Village, city or 6-digit PIN…"
               className="w-64 pl-8"
             />
           </div>
-          <Button type="submit" variant="secondary" size="sm" disabled={loading}>Go</Button>
+          <Button type="submit" variant="secondary" size="sm" disabled={loading}>Save</Button>
+          {savedPlace && (
+            <Button type="button" variant="ghost" size="sm" onClick={handleClearSaved} disabled={loading}>
+              Use live location
+            </Button>
+          )}
           {data && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => void load({ lat: data.location.lat, lng: data.location.lng })}
+              onClick={() =>
+                void load(savedPlace ? { place: savedPlace } : { lat: data.location.lat, lng: data.location.lng })
+              }
               disabled={loading}
               aria-label="Refresh"
             >
@@ -301,6 +309,16 @@ function WeatherPage() {
           )}
         </form>
       </div>
+
+      {!savedPlace && data && usingGeo && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/5 p-3 text-xs text-muted-foreground">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+          <span>
+            On desktops, browser location often uses Wi-Fi / IP and can land on a nearby town instead of your village.
+            Type your village name or 6-digit PIN (e.g. <span className="font-medium text-foreground">443304</span>) above and click <span className="font-medium text-foreground">Save</span> — it will stick on every refresh.
+          </span>
+        </div>
+      )}
 
       {error && (
         <div className="mb-5 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
