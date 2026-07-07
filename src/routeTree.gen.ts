@@ -23,6 +23,7 @@ import { Route as WorkspaceFarmProfileRouteImport } from './routes/_workspace.fa
 import { Route as WorkspaceFarmPlannerRouteImport } from './routes/_workspace.farm-planner'
 import { Route as WorkspaceDiseaseScannerRouteImport } from './routes/_workspace.disease-scanner'
 import { Route as WorkspaceDashboardRouteImport } from './routes/_workspace.dashboard'
+import { Route as WorkspaceCommandCenterRouteImport } from './routes/_workspace.command-center'
 import { Route as WorkspaceChatRouteImport } from './routes/_workspace.chat'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -95,6 +96,11 @@ const WorkspaceDashboardRoute = WorkspaceDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => WorkspaceRoute,
 } as any)
+const WorkspaceCommandCenterRoute = WorkspaceCommandCenterRouteImport.update({
+  id: '/command-center',
+  path: '/command-center',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
 const WorkspaceChatRoute = WorkspaceChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/chat': typeof WorkspaceChatRoute
+  '/command-center': typeof WorkspaceCommandCenterRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-planner': typeof WorkspaceFarmPlannerRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/chat': typeof WorkspaceChatRoute
+  '/command-center': typeof WorkspaceCommandCenterRoute
   '/dashboard': typeof WorkspaceDashboardRoute
   '/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/farm-planner': typeof WorkspaceFarmPlannerRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_workspace/chat': typeof WorkspaceChatRoute
+  '/_workspace/command-center': typeof WorkspaceCommandCenterRoute
   '/_workspace/dashboard': typeof WorkspaceDashboardRoute
   '/_workspace/disease-scanner': typeof WorkspaceDiseaseScannerRoute
   '/_workspace/farm-planner': typeof WorkspaceFarmPlannerRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/chat'
+    | '/command-center'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-planner'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/chat'
+    | '/command-center'
     | '/dashboard'
     | '/disease-scanner'
     | '/farm-planner'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_workspace/chat'
+    | '/_workspace/command-center'
     | '/_workspace/dashboard'
     | '/_workspace/disease-scanner'
     | '/_workspace/farm-planner'
@@ -312,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceDashboardRouteImport
       parentRoute: typeof WorkspaceRoute
     }
+    '/_workspace/command-center': {
+      id: '/_workspace/command-center'
+      path: '/command-center'
+      fullPath: '/command-center'
+      preLoaderRoute: typeof WorkspaceCommandCenterRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
     '/_workspace/chat': {
       id: '/_workspace/chat'
       path: '/chat'
@@ -324,6 +343,7 @@ declare module '@tanstack/react-router' {
 
 interface WorkspaceRouteChildren {
   WorkspaceChatRoute: typeof WorkspaceChatRoute
+  WorkspaceCommandCenterRoute: typeof WorkspaceCommandCenterRoute
   WorkspaceDashboardRoute: typeof WorkspaceDashboardRoute
   WorkspaceDiseaseScannerRoute: typeof WorkspaceDiseaseScannerRoute
   WorkspaceFarmPlannerRoute: typeof WorkspaceFarmPlannerRoute
@@ -336,6 +356,7 @@ interface WorkspaceRouteChildren {
 
 const WorkspaceRouteChildren: WorkspaceRouteChildren = {
   WorkspaceChatRoute: WorkspaceChatRoute,
+  WorkspaceCommandCenterRoute: WorkspaceCommandCenterRoute,
   WorkspaceDashboardRoute: WorkspaceDashboardRoute,
   WorkspaceDiseaseScannerRoute: WorkspaceDiseaseScannerRoute,
   WorkspaceFarmPlannerRoute: WorkspaceFarmPlannerRoute,
@@ -361,13 +382,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
