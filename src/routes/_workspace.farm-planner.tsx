@@ -192,7 +192,16 @@ function FarmPlannerPage() {
       plan.tips.forEach((t) => line(`• ${t}`, 10));
     }
 
-    doc.save(`FarmPlan-${plan.crop}-${plan.location.replace(/\s+/g, "_")}.pdf`);
+    const filename = `FarmPlan-${plan.crop}-${plan.location.replace(/\s+/g, "_")}.pdf`;
+    doc.save(filename);
+    const { saveGeneratedReport } = await import("@/lib/reports/save-client");
+    await saveGeneratedReport({
+      title: `Farm Plan — ${plan.crop} (${plan.location})`,
+      kind: "farm-plan",
+      summary: `${plan.landSizeAcres} acres • ${plan.season} • Net profit ${inr(plan.profit.netProfit)}`,
+      doc,
+      activityDetail: `Generated seasonal plan for ${plan.crop}`,
+    });
   };
 
   return (
