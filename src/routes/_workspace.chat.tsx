@@ -228,6 +228,18 @@ function ChatPage() {
     [chatId],
   );
 
+  // Auto-send an initial query passed via ?q=... (e.g. from the dashboard).
+  const autoSentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialQuery) return;
+    if (autoSentRef.current === initialQuery) return;
+    autoSentRef.current = initialQuery;
+    // Strip q from the URL so refresh doesn't resend.
+    void navigate({ to: "/chat", search: { c: chatId }, replace: true });
+    void send(initialQuery, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
+
   const regenerate = () => {
     const lastUser = [...messages].reverse().find((m) => m.role === "user") as
       | Extract<ChatMessage, { role: "user" }>
