@@ -57,6 +57,7 @@ function ChatPage() {
   const [chatId, setChatId] = useState<string | undefined>(chatIdFromUrl);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
+  const localChatIdsRef = useRef<Set<string>>(new Set());
 
   const routeIntentFn = useServerFn(routeIntent);
   const generalFn = useServerFn(runGeneralAgent);
