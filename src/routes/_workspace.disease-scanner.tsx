@@ -89,13 +89,14 @@ function DiseaseScanner() {
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <Card className="glass border-0">
           <CardContent className="p-5">
-            <label
+            <div
               onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
               onDragLeave={() => setDrag(false)}
               onDrop={(e) => {
                 e.preventDefault(); setDrag(false);
                 const f = e.dataTransfer.files?.[0]; if (f) handleFile(f);
               }}
+              onClick={() => { if (!preview) fileInputRef.current?.click(); }}
               className={cn(
                 "relative flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors",
                 drag ? "border-accent bg-accent/5" : "border-border hover:border-accent/60 hover:bg-white/[0.02]",
@@ -104,7 +105,7 @@ function DiseaseScanner() {
               {preview ? (
                 <>
                   <img src={preview} alt="Preview" className="max-h-72 rounded-lg object-contain" />
-                  <Button variant="ghost" size="sm" className="mt-3" onClick={(e) => { e.preventDefault(); handleFile(null); }}>
+                  <Button variant="ghost" size="sm" className="mt-3" onClick={(e) => { e.stopPropagation(); handleFile(null); }}>
                     <X className="mr-1.5 h-4 w-4" /> Remove
                   </Button>
                 </>
@@ -116,16 +117,36 @@ function DiseaseScanner() {
                   <div className="mt-4 font-medium">Drag & drop an image</div>
                   <div className="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB</div>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    <Button size="sm" variant="secondary"><ImageIcon className="mr-1.5 h-4 w-4" />Browse</Button>
-                    <Button size="sm" variant="outline"><Camera className="mr-1.5 h-4 w-4" />Camera</Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    >
+                      <ImageIcon className="mr-1.5 h-4 w-4" />Browse
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}
+                    >
+                      <Camera className="mr-1.5 h-4 w-4" />Camera
+                    </Button>
                   </div>
                 </>
               )}
               <input
+                ref={fileInputRef}
                 type="file" accept="image/*" className="sr-only"
-                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
               />
-            </label>
+              <input
+                ref={cameraInputRef}
+                type="file" accept="image/*" capture="environment" className="sr-only"
+                onChange={(e) => { handleFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
+              />
+            </div>
 
             <Button
               onClick={handleDiagnose}
