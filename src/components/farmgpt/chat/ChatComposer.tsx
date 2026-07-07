@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Mic, MapPin, ArrowUp, FileText, X, Square } from "lucide-react";
+import { ImagePlus, Mic, MapPin, ArrowUp, FileText, X, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 const MAX = 2000;
 const DEFAULT_PLACEHOLDER =
