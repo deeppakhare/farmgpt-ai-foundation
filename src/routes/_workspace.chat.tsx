@@ -87,6 +87,10 @@ function ChatPage() {
       setMessages([]);
       return;
     }
+    // Skip reload for chats we just created in this session — keep the in-memory messages.
+    if (localChatIdsRef.current.has(chatIdFromUrl)) {
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     getChatMessagesFn({ data: { chatId: chatIdFromUrl } })
