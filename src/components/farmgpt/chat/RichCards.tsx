@@ -1,3 +1,4 @@
+import type React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
@@ -321,7 +322,159 @@ export function ActionPlan({ b }: { b: Extract<Block, { kind: "actionPlan" }> })
   );
 }
 
+/* ─── Disease Vision (AI diagnosis) ─── */
+
+export function DiseaseVisionCard({ b }: { b: Extract<Block, { kind: "diseaseVision" }> }) {
+  const severityTone =
+    b.severity === "Severe"
+      ? "text-rose-300"
+      : b.severity === "Moderate"
+        ? "text-amber-300"
+        : b.severity === "Mild"
+          ? "text-emerald-300"
+          : "text-muted-foreground";
+  const emergencyTone =
+    b.emergencyLevel === "Critical"
+      ? "rose"
+      : b.emergencyLevel === "High"
+        ? "rose"
+        : b.emergencyLevel === "Medium"
+          ? "amber"
+          : "emerald";
+  const lowConfidence = b.confidence < 70;
+  return (
+    <Card className="glass border-0 overflow-hidden">
+      <CardContent className="p-5">
+        <CardHeader
+          icon={Leaf}
+          eyebrow="AI Vision Diagnosis"
+          title={b.diseaseName || "Unclear diagnosis"}
+          tone="emerald"
+        />
+
+        {lowConfidence && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] p-3 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <div className="text-muted-foreground">
+              <span className="font-medium text-foreground">Low confidence ({b.confidence}%). </span>
+              {b.lowConfidenceNotice ??
+                "Please upload 2–3 additional clear, close-up photos (top & bottom of leaf, whole plant, and any affected fruit/stem) before I recommend treatment."}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-3">
+          <Stat label="Confidence" value={`${b.confidence}%`} />
+          <Stat label="Severity" value={b.severity} valueClassName={severityTone} />
+          <Stat label="Emergency" value={b.emergencyLevel} />
+        </div>
+
+        <div className="mt-3">
+          <div className="mb-1.5 text-[11px] text-muted-foreground">Confidence</div>
+          <Progress value={b.confidence} className="h-1.5 bg-white/5" />
+        </div>
+
+        {b.symptoms.length > 0 && (
+          <Section title="Symptoms observed" icon={Activity} tone="sky">
+            <BulletList items={b.symptoms} />
+          </Section>
+        )}
+
+        {b.possibleCause && (
+          <Section title="Possible cause" icon={Sprout} tone="violet">
+            <p className="text-sm text-muted-foreground leading-relaxed">{b.possibleCause}</p>
+          </Section>
+        )}
+
+        {!lowConfidence && b.organicTreatment.length > 0 && (
+          <Section title="Organic treatment" icon={Leaf} tone="emerald">
+            <BulletList items={b.organicTreatment} />
+          </Section>
+        )}
+
+        {!lowConfidence && b.chemicalTreatment.length > 0 && (
+          <Section title="Chemical treatment" icon={FlaskConical} tone="amber">
+            <BulletList items={b.chemicalTreatment} />
+          </Section>
+        )}
+
+        {b.preventionTips.length > 0 && (
+          <Section title="Prevention tips" icon={CheckCircle2} tone="emerald">
+            <BulletList items={b.preventionTips} />
+          </Section>
+        )}
+
+        {b.nextActions.length > 0 && (
+          <Section
+            title={lowConfidence ? "What to do next" : "Immediate next actions"}
+            icon={Scissors}
+            tone={emergencyTone as "emerald" | "amber" | "rose"}
+          >
+            <ol className="space-y-2">
+              {b.nextActions.map((a, i) => (
+                <li
+                  key={i}
+                  className="flex gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3"
+                >
+                  <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gradient-primary text-xs font-semibold text-primary-foreground">
+                    {i + 1}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{a}</div>
+                </li>
+              ))}
+            </ol>
+          </Section>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Section({
+  title,
+  icon: Icon,
+  tone,
+  children,
+}: {
+  title: string;
+  icon: any;
+  tone: "emerald" | "sky" | "amber" | "violet" | "rose";
+  children: React.ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    emerald: "text-emerald-300",
+    sky: "text-sky-300",
+    amber: "text-amber-300",
+    violet: "text-violet-300",
+    rose: "text-rose-300",
+  };
+  return (
+    <div className="mt-4">
+      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+        <Icon className={cn("h-3.5 w-3.5", tones[tone])} />
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />
+          <span>{it}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /* ─── Followups ─── */
+
+
 
 export function FollowUps({
   questions,
@@ -358,6 +511,8 @@ export function BlockRenderer({ block, onFollowup }: { block: Block; onFollowup:
       return <MarkdownBlock text={block.text} />;
     case "diagnosis":
       return <DiagnosisCard b={block} />;
+    case "diseaseVision":
+      return <DiseaseVisionCard b={block} />;
     case "weather":
       return <WeatherCard b={block} />;
     case "recommendation":

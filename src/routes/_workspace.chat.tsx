@@ -9,7 +9,7 @@ import { ChatComposer, type Attachment } from "@/components/farmgpt/chat/ChatCom
 import { AssistantMessage, TypingIndicator, UserMessage } from "@/components/farmgpt/chat/Message";
 import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
 import { ChatHistoryPanel } from "@/components/farmgpt/chat/ChatHistoryPanel";
-import { QUICK_PROMPTS, type ChatMessage } from "@/lib/chat-mocks";
+import { QUICK_PROMPTS, type Block, type ChatMessage } from "@/lib/chat-mocks";
 import { routeIntent } from "@/lib/agents/intent-router.functions";
 import { runGeneralAgent } from "@/lib/agents/general-agent.functions";
 import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
@@ -96,19 +96,26 @@ function ChatPage() {
 
       const message = text || "Please analyze the attached image.";
 
-      const { agent } = await routeIntentFn({ data: { message } });
+      // If the user attached an image, always route to the vision disease agent.
+      const agent = imageUrl
+        ? ("disease-agent" as const)
+        : (await routeIntentFn({ data: { message } })).agent;
       if (abortRef.current) return;
 
       const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
       const response = await agentFn({ data: { message, imageUrl } });
       if (abortRef.current) return;
 
+      const extraBlocks = Array.isArray(response.blocks) ? (response.blocks as Block[]) : [];
+      const blocks: Block[] = [];
+      if (response.content) blocks.push({ kind: "markdown", text: response.content });
+      blocks.push(...extraBlocks);
       setMessages((prev) => [
         ...prev,
         {
           id: `a${Date.now()}`,
           role: "assistant",
-          blocks: [{ kind: "markdown", text: response.content }],
+          blocks: blocks.length ? blocks : [{ kind: "markdown", text: "" }],
         },
       ]);
     } catch (err) {

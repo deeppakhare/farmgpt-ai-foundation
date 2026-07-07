@@ -104,6 +104,20 @@ export type Block =
       kind: "actionPlan";
       items: { when: "Today" | "Tomorrow" | "In 3 days" | "Next week"; title: string; detail: string; icon: "water" | "spray" | "scout" | "harvest" | "fertilize" }[];
     }
+  | {
+      kind: "diseaseVision";
+      diseaseName: string;
+      confidence: number;
+      severity: "Mild" | "Moderate" | "Severe" | "Unknown";
+      symptoms: string[];
+      possibleCause: string;
+      organicTreatment: string[];
+      chemicalTreatment: string[];
+      preventionTips: string[];
+      nextActions: string[];
+      emergencyLevel: "Low" | "Medium" | "High" | "Critical";
+      lowConfidenceNotice?: string;
+    }
   | { kind: "followups"; questions: string[] };
 
 export type ChatMessage =

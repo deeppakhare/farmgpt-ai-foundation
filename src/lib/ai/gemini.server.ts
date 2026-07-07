@@ -9,6 +9,7 @@ export interface GeminiCallOptions {
   imageMimeType?: string;
   temperature?: number;
   maxOutputTokens?: number;
+  jsonMode?: boolean;
 }
 
 export interface GeminiResult {
@@ -58,6 +59,7 @@ export async function callGemini(opts: GeminiCallOptions): Promise<GeminiResult>
       messages,
       ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
       ...(opts.maxOutputTokens !== undefined ? { max_tokens: opts.maxOutputTokens } : {}),
+      ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
     }),
   });
 
