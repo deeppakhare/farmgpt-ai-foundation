@@ -449,7 +449,7 @@ function WeatherPage() {
           {/* Daily */}
           <Card className="glass mt-6 border-0">
             <CardContent className="p-5">
-              <h2 className="font-display text-base font-semibold">7-day forecast</h2>
+              <h2 className="font-display text-base font-semibold">3-day forecast</h2>
               <div className="mt-3 divide-y divide-border/60">
                 {data.daily.map((d: WeatherDay, i) => {
                   const Icon = codeToIcon(d.code);
