@@ -49,7 +49,7 @@ async function blobUrlToBase64DataUrl(url: string): Promise<string | undefined> 
 }
 
 function ChatPage() {
-  const { c: chatIdFromUrl } = Route.useSearch();
+  const { c: chatIdFromUrl, q: initialQuery } = Route.useSearch();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
