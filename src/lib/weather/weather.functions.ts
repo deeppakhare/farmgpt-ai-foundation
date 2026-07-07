@@ -274,7 +274,11 @@ export const getWeatherIntelligence = createServerFn({ method: "POST" })
 
     if (data.place) {
       location = await geocode(data.place);
-      if (!location) throw new Error(`Location "${data.place}" not found.`);
+      if (!location) {
+        throw new Error(
+          `Couldn't find "${data.place}". Try a city or village name (e.g. "Aurangabad") instead of a PIN code, or use auto-detect.`,
+        );
+      }
     } else if (typeof data.lat === "number" && typeof data.lng === "number") {
       const rev = await reverseGeocode(data.lat, data.lng);
       location = {
