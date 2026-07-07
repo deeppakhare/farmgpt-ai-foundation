@@ -195,10 +195,11 @@ function WeatherPage() {
     [weatherFn],
   );
 
-  // Attempt geolocation on first mount.
+  // Always try to use the user's live location on page visit / refresh.
   useEffect(() => {
     if (!navigator.geolocation) {
-      void load({});
+      setError("Your browser doesn't support location access. Search a place to continue.");
+      setLoading(false);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -206,10 +207,16 @@ function WeatherPage() {
         setUsingGeo(true);
         void load({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
-      () => {
-        void load({});
+      (err) => {
+        // Permission denied / unavailable — don't silently fall back to a hardcoded city.
+        setLoading(false);
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location access blocked. Enable location in your browser to see weather for your area, or search a place below."
+            : "Couldn't detect your location. Search a place below to continue.",
+        );
       },
-      { timeout: 6000, maximumAge: 10 * 60 * 1000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
