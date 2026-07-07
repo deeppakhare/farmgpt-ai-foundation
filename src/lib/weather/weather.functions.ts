@@ -66,7 +66,42 @@ interface Input {
 // ─── Open-Meteo helpers ───────────────────────────────────────────────────
 
 async function geocode(place: string): Promise<WeatherLocation | null> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=en&format=json`;
+  const trimmed = place.trim();
+
+  // Indian PIN code (6 digits) — Open-Meteo geocoding doesn't handle postal
+  // codes, so fall back to zippopotam.us for a name + lat/lng.
+  if (/^\d{6}$/.test(trimmed)) {
+    try {
+      const res = await fetch(`https://api.zippopotam.us/in/${trimmed}`);
+      if (res.ok) {
+        const j = (await res.json()) as {
+          "post code": string;
+          country: string;
+          places?: Array<{
+            "place name": string;
+            state?: string;
+            latitude: string;
+            longitude: string;
+          }>;
+        };
+        const p = j.places?.[0];
+        if (p) {
+          return {
+            name: `${p["place name"]} (${trimmed})`,
+            region: p.state,
+            country: j.country,
+            lat: parseFloat(p.latitude),
+            lng: parseFloat(p.longitude),
+            timezone: "Asia/Kolkata",
+          };
+        }
+      }
+    } catch {
+      // fall through to name-based geocoding
+    }
+  }
+
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmed)}&count=1&language=en&format=json`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const j = (await res.json()) as {
@@ -90,6 +125,7 @@ async function geocode(place: string): Promise<WeatherLocation | null> {
     timezone: r.timezone,
   };
 }
+
 
 async function reverseGeocode(lat: number, lng: number): Promise<Partial<WeatherLocation>> {
   try {
