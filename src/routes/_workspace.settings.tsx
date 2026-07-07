@@ -145,7 +145,7 @@ function Settings() {
         </Section>
 
         <Section icon={Lock} title="Security" desc="Password and two-factor authentication">
-          <Row label="Change password"><Button variant="outline" size="sm">Update</Button></Row>
+          <Row label="Change password"><ChangePasswordDialog /></Row>
           <Row label="Two-factor authentication" hint="Add an extra layer of security"><Switch /></Row>
           <Row label="Delete account" hint="This action is permanent"><Button variant="destructive" size="sm">Delete</Button></Row>
         </Section>
