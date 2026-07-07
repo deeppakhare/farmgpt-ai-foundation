@@ -108,11 +108,21 @@ function Dashboard() {
                 <Badge variant="secondary" className="rounded-full bg-white/5">Crop: Tomato</Badge>
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
-                <Button className="bg-gradient-primary text-primary-foreground shadow-glow">
+                <Button
+                  onClick={() => sendToChat("Apply today's AI recommendation to my schedule — delay pesticide spraying until Thursday morning and irrigate tomorrow after 6 PM.")}
+                  className="bg-gradient-primary text-primary-foreground shadow-glow"
+                >
                   Apply to my schedule <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">Ask a follow-up</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => sendToChat("I have a follow-up question about today's AI recommendation about rain and pesticide spraying.")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Ask a follow-up
+                </Button>
               </div>
+
             </CardContent>
           </Card>
         </motion.div>
