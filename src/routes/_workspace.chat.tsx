@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { motion, AnimatePresence } from "framer-motion";
-import { PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChatComposer, type Attachment } from "@/components/farmgpt/chat/ChatComposer";
 import { AssistantMessage, TypingIndicator, UserMessage } from "@/components/farmgpt/chat/Message";
 import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
-import { ChatHistoryPanel } from "@/components/farmgpt/chat/ChatHistoryPanel";
 import { QUICK_PROMPTS, type Block, type ChatMessage } from "@/lib/chat-mocks";
 import { routeIntent } from "@/lib/agents/intent-router.functions";
 import { runGeneralAgent } from "@/lib/agents/general-agent.functions";
@@ -42,7 +40,7 @@ function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(true);
+  
   const [activeConv, setActiveConv] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
@@ -159,34 +157,8 @@ function ChatPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full">
-      <AnimatePresence initial={false}>
-        {historyOpen && (
-          <motion.aside
-            key="history"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="hidden shrink-0 overflow-hidden border-r border-white/5 md:block"
-          >
-            <div className="h-full w-[280px]">
-              <ChatHistoryPanel activeId={activeConv} onSelect={selectConv} onNew={startNew} />
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => setHistoryOpen((v) => !v)}
-            aria-label="Toggle chat history"
-          >
-            {historyOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-          </Button>
           <div className="text-xs font-medium text-muted-foreground">
             {activeConv ? "Conversation" : messages.length > 0 ? "New chat" : "Start a conversation"}
           </div>
