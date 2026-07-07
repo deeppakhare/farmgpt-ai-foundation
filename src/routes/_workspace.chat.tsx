@@ -57,6 +57,7 @@ function ChatPage() {
   const [chatId, setChatId] = useState<string | undefined>(chatIdFromUrl);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
+  const localChatIdsRef = useRef<Set<string>>(new Set());
 
   const routeIntentFn = useServerFn(routeIntent);
   const generalFn = useServerFn(runGeneralAgent);
@@ -84,6 +85,10 @@ function ChatPage() {
     setChatId(chatIdFromUrl);
     if (!chatIdFromUrl) {
       setMessages([]);
+      return;
+    }
+    // Skip reload for chats we just created in this session — keep the in-memory messages.
+    if (localChatIdsRef.current.has(chatIdFromUrl)) {
       return;
     }
     let cancelled = false;
@@ -138,8 +143,9 @@ function ChatPage() {
           const title = (text || "New conversation").slice(0, 60);
           const created = await createChatFn({ data: { title } });
           activeChatId = created.id;
+          localChatIdsRef.current.add(activeChatId);
           setChatId(activeChatId);
-          void navigate({ to: "/chat", search: { c: activeChatId } });
+          void navigate({ to: "/chat", search: { c: activeChatId }, replace: true });
         }
 
         // Persist user message
