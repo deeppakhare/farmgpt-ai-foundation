@@ -53,7 +53,78 @@ const FARM_GROUP = {
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search as { c?: string } });
+  const activeChatId = search?.c;
+  const navigate = useNavigate();
   const { name, initials } = useFarmer();
+
+  const listChatsFn = useServerFn(listChats);
+  const searchChatsFn = useServerFn(searchChats);
+  const deleteChatFn = useServerFn(deleteChat);
+
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [chatsLoading, setChatsLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ChatSummary[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refresh = useMemo(
+    () => () => {
+      setChatsLoading(true);
+      listChatsFn()
+        .then(setChats)
+        .catch(() => {})
+        .finally(() => setChatsLoading(false));
+    },
+    [listChatsFn],
+  );
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  // Refresh whenever route or active chat changes so newly-created chats show up.
+  useEffect(() => {
+    refresh();
+  }, [pathname, activeChatId, refresh]);
+
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (!q) {
+      setResults(null);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    debounceRef.current = setTimeout(() => {
+      searchChatsFn({ data: { q } })
+        .then(setResults)
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 250);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, searchChatsFn]);
+
+  const displayed = results ?? chats;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteChatFn({ data: { chatId: id } });
+      setChats((prev) => prev.filter((c) => c.id !== id));
+      setResults((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
+      if (activeChatId === id) void navigate({ to: "/chat", search: {} });
+      toast.success("Conversation deleted");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete");
+    }
+  };
+
+
 
   return (
     <aside
