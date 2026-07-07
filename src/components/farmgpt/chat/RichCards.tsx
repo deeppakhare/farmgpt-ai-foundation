@@ -510,6 +510,8 @@ export function BlockRenderer({ block, onFollowup }: { block: Block; onFollowup:
       return <MarkdownBlock text={block.text} />;
     case "diagnosis":
       return <DiagnosisCard b={block} />;
+    case "diseaseVision":
+      return <DiseaseVisionCard b={block} />;
     case "weather":
       return <WeatherCard b={block} />;
     case "recommendation":
