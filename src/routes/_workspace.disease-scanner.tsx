@@ -18,6 +18,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { runDiseaseAgent } from "@/lib/agents/disease-agent.functions";
+import { askDiseaseFollowup } from "@/lib/agents/disease-followup.functions";
+import { Input } from "@/components/ui/input";
+import { Send, MessageCircle } from "lucide-react";
 import {
   listDiseaseScans,
   saveDiseaseScan,
@@ -63,6 +66,27 @@ function extractVisionBlock(blocks: JsonValue[]): Record<string, JsonValue> | nu
   return null;
 }
 
+function buildDiagnosisContext(v: Record<string, JsonValue> | null): string {
+  if (!v) return "";
+  const asList = (x: JsonValue): string =>
+    Array.isArray(x) ? x.map((i) => `- ${String(i)}`).join("\n") : "";
+  const lines = [
+    `Disease: ${String(v.diseaseName ?? "Unknown")}`,
+    `Confidence: ${String(v.confidence ?? "?")}%`,
+    `Severity: ${String(v.severity ?? "Unknown")}`,
+    `Emergency: ${String(v.emergencyLevel ?? "Low")}`,
+    v.possibleCause ? `Cause: ${String(v.possibleCause)}` : "",
+    asList(v.symptoms) && `Symptoms:\n${asList(v.symptoms)}`,
+    asList(v.organicTreatment) && `Organic treatment:\n${asList(v.organicTreatment)}`,
+    asList(v.chemicalTreatment) && `Chemical treatment:\n${asList(v.chemicalTreatment)}`,
+    asList(v.preventionTips) && `Prevention:\n${asList(v.preventionTips)}`,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+interface ChatTurn { role: "user" | "assistant"; content: string }
+
+
 function DiseaseScanner() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -76,13 +100,22 @@ function DiseaseScanner() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selected, setSelected] = useState<DiseaseScanRow | null>(null);
 
+  // Follow-up chat state (scoped to the current diagnosis)
+  const [chatMessages, setChatMessages] = useState<ChatTurn[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [diagImageUrl, setDiagImageUrl] = useState<string | null>(null);
+  const [diagContext, setDiagContext] = useState<string>("");
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const diseaseFn = useServerFn(runDiseaseAgent);
+  const followupFn = useServerFn(askDiseaseFollowup);
   const listFn = useServerFn(listDiseaseScans);
   const saveFn = useServerFn(saveDiseaseScan);
   const deleteFn = useServerFn(deleteDiseaseScan);
+
 
   const refreshHistory = useCallback(async () => {
     try {
@@ -104,6 +137,10 @@ function DiseaseScanner() {
     setBlocks([]);
     setIntro(null);
     setError(null);
+    setChatMessages([]);
+    setChatInput("");
+    setDiagImageUrl(null);
+    setDiagContext("");
     if (f) setPreview(URL.createObjectURL(f));
     else setPreview(null);
   }, []);
@@ -112,6 +149,8 @@ function DiseaseScanner() {
     setError(null);
     setBlocks([]);
     setIntro(null);
+    setChatMessages([]);
+    setChatInput("");
 
     if (!file) {
       setError("Please upload a clear photo of the affected crop before diagnosing.");
@@ -129,6 +168,8 @@ function DiseaseScanner() {
       setBlocks(respBlocks as unknown as Block[]);
 
       const vision = extractVisionBlock(respBlocks);
+      setDiagImageUrl(imageUrl);
+      setDiagContext(buildDiagnosisContext(vision));
       if (vision) {
         try {
           await saveFn({
@@ -155,6 +196,39 @@ function DiseaseScanner() {
       setLoading(false);
     }
   }, [file, diseaseFn, saveFn, refreshHistory]);
+
+  const handleSendChat = useCallback(async () => {
+    const q = chatInput.trim();
+    if (!q || chatSending) return;
+    const nextHistory: ChatTurn[] = [...chatMessages, { role: "user", content: q }];
+    setChatMessages(nextHistory);
+    setChatInput("");
+    setChatSending(true);
+    try {
+      const res = await followupFn({
+        data: {
+          question: q,
+          imageUrl: diagImageUrl ?? undefined,
+          diagnosisContext: diagContext || undefined,
+          history: chatMessages.slice(-8),
+        },
+      });
+      setChatMessages([...nextHistory, { role: "assistant", content: res.content }]);
+    } catch (e) {
+      console.error(e);
+      setChatMessages([
+        ...nextHistory,
+        {
+          role: "assistant",
+          content:
+            e instanceof Error ? `Sorry — ${e.message}` : "Sorry, something went wrong.",
+        },
+      ]);
+    } finally {
+      setChatSending(false);
+    }
+  }, [chatInput, chatSending, chatMessages, followupFn, diagImageUrl, diagContext]);
+
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -273,6 +347,66 @@ function DiseaseScanner() {
                 ))}
               </div>
             )}
+
+            {diagContext && (
+              <div className="mt-6 rounded-xl border border-border/60 bg-white/[0.02] p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-accent" />
+                  <h3 className="text-sm font-semibold">Ask about this diagnosis</h3>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Have doubts? Ask any follow-up question about the uploaded image, this disease, or the treatment.
+                </p>
+
+                {chatMessages.length > 0 && (
+                  <ScrollArea className="mb-3 max-h-72 pr-2">
+                    <div className="space-y-3">
+                      {chatMessages.map((m, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "rounded-lg px-3 py-2 text-sm",
+                            m.role === "user"
+                              ? "ml-auto max-w-[85%] bg-primary text-primary-foreground"
+                              : "mr-auto max-w-[90%] bg-white/[0.04] text-foreground",
+                          )}
+                        >
+                          <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                        </div>
+                      ))}
+                      {chatSending && (
+                        <div className="mr-auto flex max-w-[90%] items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
+
+                <form
+                  onSubmit={(e) => { e.preventDefault(); void handleSendChat(); }}
+                  className="flex items-center gap-2"
+                >
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="e.g. Is neem oil enough or do I need Mancozeb?"
+                    disabled={chatSending}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={!chatInput.trim() || chatSending}
+                    className="bg-gradient-primary text-primary-foreground shadow-glow"
+                    aria-label="Send"
+                  >
+                    {chatSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </form>
+              </div>
+            )}
+
           </CardContent>
         </Card>
 
