@@ -347,6 +347,66 @@ function DiseaseScanner() {
                 ))}
               </div>
             )}
+
+            {diagContext && (
+              <div className="mt-6 rounded-xl border border-border/60 bg-white/[0.02] p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-accent" />
+                  <h3 className="text-sm font-semibold">Ask about this diagnosis</h3>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Have doubts? Ask any follow-up question about the uploaded image, this disease, or the treatment.
+                </p>
+
+                {chatMessages.length > 0 && (
+                  <ScrollArea className="mb-3 max-h-72 pr-2">
+                    <div className="space-y-3">
+                      {chatMessages.map((m, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "rounded-lg px-3 py-2 text-sm",
+                            m.role === "user"
+                              ? "ml-auto max-w-[85%] bg-primary text-primary-foreground"
+                              : "mr-auto max-w-[90%] bg-white/[0.04] text-foreground",
+                          )}
+                        >
+                          <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                        </div>
+                      ))}
+                      {chatSending && (
+                        <div className="mr-auto flex max-w-[90%] items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
+
+                <form
+                  onSubmit={(e) => { e.preventDefault(); void handleSendChat(); }}
+                  className="flex items-center gap-2"
+                >
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="e.g. Is neem oil enough or do I need Mancozeb?"
+                    disabled={chatSending}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={!chatInput.trim() || chatSending}
+                    className="bg-gradient-primary text-primary-foreground shadow-glow"
+                    aria-label="Send"
+                  >
+                    {chatSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </form>
+              </div>
+            )}
+
           </CardContent>
         </Card>
 
