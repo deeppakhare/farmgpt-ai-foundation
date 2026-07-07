@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { ChatComposer, type Attachment } from "@/components/farmgpt/chat/ChatComposer";
 import { AssistantMessage, TypingIndicator, UserMessage } from "@/components/farmgpt/chat/Message";
 import { ChatEmptyState } from "@/components/farmgpt/chat/EmptyState";
@@ -16,8 +16,19 @@ import { runMarketAgent } from "@/lib/agents/market-agent.functions";
 import { runGovernmentAgent } from "@/lib/agents/government-agent.functions";
 import { runFertilizerAgent } from "@/lib/agents/fertilizer-agent.functions";
 import type { AgentName } from "@/lib/agents/types";
+import {
+  createChat,
+  appendMessage,
+  getChatMessages,
+  renameChat,
+} from "@/lib/chat/chat.functions";
+
+type ChatSearch = { c?: string };
 
 export const Route = createFileRoute("/_workspace/chat")({
+  validateSearch: (s: Record<string, unknown>): ChatSearch => ({
+    c: typeof s.c === "string" ? s.c : undefined,
+  }),
   component: ChatPage,
 });
 
@@ -37,11 +48,13 @@ async function blobUrlToBase64DataUrl(url: string): Promise<string | undefined> 
 }
 
 function ChatPage() {
+  const { c: chatIdFromUrl } = Route.useSearch();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
   const [streaming, setStreaming] = useState(false);
-  
-  const [activeConv, setActiveConv] = useState<string | undefined>();
+  const [loading, setLoading] = useState(false);
+  const [chatId, setChatId] = useState<string | undefined>(chatIdFromUrl);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef(false);
 
@@ -52,6 +65,10 @@ function ChatPage() {
   const marketFn = useServerFn(runMarketAgent);
   const govFn = useServerFn(runGovernmentAgent);
   const fertilizerFn = useServerFn(runFertilizerAgent);
+  const createChatFn = useServerFn(createChat);
+  const appendMessageFn = useServerFn(appendMessage);
+  const getChatMessagesFn = useServerFn(getChatMessages);
+  const renameChatFn = useServerFn(renameChat);
 
   const agentMap: Record<Exclude<AgentName, "intent-router">, typeof diseaseFn> = {
     "general-agent": generalFn,
@@ -61,6 +78,31 @@ function ChatPage() {
     "government-agent": govFn,
     "fertilizer-agent": fertilizerFn,
   };
+
+  // Load chat when URL param changes
+  useEffect(() => {
+    setChatId(chatIdFromUrl);
+    if (!chatIdFromUrl) {
+      setMessages([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    getChatMessagesFn({ data: { chatId: chatIdFromUrl } })
+      .then((r) => {
+        if (cancelled) return;
+        setMessages(r.messages);
+      })
+      .catch((e: unknown) => {
+        toast.error(e instanceof Error ? e.message : "Could not load conversation");
+        void navigate({ to: "/chat", search: {} });
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatIdFromUrl]);
 
   const [rotationSeed, setRotationSeed] = useState(0);
   useEffect(() => {
@@ -73,75 +115,111 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, streaming]);
 
-  const send = async (text: string, atts: Attachment[]) => {
-    if (!text && atts.length === 0) return;
-    const userMsg: ChatMessage = {
-      id: `u${Date.now()}`,
-      role: "user",
-      text: text || "(attachment)",
-      attachments: atts.map((a) => ({ name: a.name, kind: a.kind })),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setPrompt("");
-    setStreaming(true);
-    abortRef.current = false;
+  const send = useCallback(
+    async (text: string, atts: Attachment[]) => {
+      if (!text && atts.length === 0) return;
+      const attachmentsMeta = atts.map((a) => ({ name: a.name, kind: a.kind }));
+      const userMsg: ChatMessage = {
+        id: `u${Date.now()}`,
+        role: "user",
+        text: text || "(attachment)",
+        attachments: attachmentsMeta,
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setPrompt("");
+      setStreaming(true);
+      abortRef.current = false;
 
-    try {
-      const firstImage = atts.find((a) => a.kind === "image" && a.url);
-      const imageUrl = firstImage?.url
-        ? await blobUrlToBase64DataUrl(firstImage.url)
-        : undefined;
+      // Ensure we have a chat row
+      let activeChatId = chatId;
+      const isFirstMessage = !activeChatId;
+      try {
+        if (!activeChatId) {
+          const title = (text || "New conversation").slice(0, 60);
+          const created = await createChatFn({ data: { title } });
+          activeChatId = created.id;
+          setChatId(activeChatId);
+          void navigate({ to: "/chat", search: { c: activeChatId } });
+        }
 
-      const message = text || "Please analyze the attached image.";
+        // Persist user message
+        await appendMessageFn({
+          data: {
+            chatId: activeChatId,
+            role: "user",
+            content: userMsg.text,
+            metadata: attachmentsMeta.length ? { attachments: attachmentsMeta } : undefined,
+          },
+        }).catch(() => {});
 
-      // If the user attached an image, always route to the vision disease agent.
-      const agent = imageUrl
-        ? ("disease-agent" as const)
-        : (await routeIntentFn({ data: { message } })).agent;
-      if (abortRef.current) return;
+        const firstImage = atts.find((a) => a.kind === "image" && a.url);
+        const imageUrl = firstImage?.url
+          ? await blobUrlToBase64DataUrl(firstImage.url)
+          : undefined;
 
-      const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
-      const response = await agentFn({ data: { message, imageUrl } });
-      if (abortRef.current) return;
+        const message = text || "Please analyze the attached image.";
+        const agent = imageUrl
+          ? ("disease-agent" as const)
+          : (await routeIntentFn({ data: { message } })).agent;
+        if (abortRef.current) return;
 
-      const extraBlocks = Array.isArray(response.blocks) ? (response.blocks as Block[]) : [];
-      const blocks: Block[] = [];
-      if (response.content) blocks.push({ kind: "markdown", text: response.content });
-      blocks.push(...extraBlocks);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `a${Date.now()}`,
-          role: "assistant",
-          blocks: blocks.length ? blocks : [{ kind: "markdown", text: "" }],
-        },
-      ]);
-    } catch (err) {
-      if (!abortRef.current) {
-        const msg = err instanceof Error ? err.message : "Something went wrong.";
+        const agentFn = agentMap[agent as Exclude<AgentName, "intent-router">] ?? generalFn;
+        const response = await agentFn({ data: { message, imageUrl } });
+        if (abortRef.current) return;
+
+        const extraBlocks = Array.isArray(response.blocks) ? (response.blocks as Block[]) : [];
+        const blocks: Block[] = [];
+        if (response.content) blocks.push({ kind: "markdown", text: response.content });
+        blocks.push(...extraBlocks);
+        const finalBlocks = blocks.length ? blocks : [{ kind: "markdown", text: "" } as Block];
+        const assistantText = finalBlocks
+          .map((b) => (b.kind === "markdown" ? b.text : ""))
+          .join("\n\n")
+          .trim() || (response.content ?? "");
+
         setMessages((prev) => [
           ...prev,
-          {
-            id: `a${Date.now()}`,
-            role: "assistant",
-            blocks: [{ kind: "markdown", text: `⚠️ ${msg}` }],
-          },
+          { id: `a${Date.now()}`, role: "assistant", blocks: finalBlocks },
         ]);
+
+        await appendMessageFn({
+          data: {
+            chatId: activeChatId,
+            role: "assistant",
+            content: assistantText,
+            metadata: { blocks: finalBlocks, agent },
+          },
+        }).catch(() => {});
+
+        // Auto-generate a nicer title from the first user message
+        if (isFirstMessage) {
+          const cleanTitle = (text || "Conversation")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 60);
+          if (cleanTitle) {
+            void renameChatFn({ data: { chatId: activeChatId, title: cleanTitle } });
+          }
+        }
+      } catch (err) {
+        if (!abortRef.current) {
+          const msg = err instanceof Error ? err.message : "Something went wrong.";
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `a${Date.now()}`,
+              role: "assistant",
+              blocks: [{ kind: "markdown", text: `⚠️ ${msg}` }],
+            },
+          ]);
+        }
+      } finally {
+        setStreaming(false);
       }
-    } finally {
-      setStreaming(false);
-    }
-  };
-
-  const startNew = () => {
-    setMessages([]);
-    setActiveConv(undefined);
-  };
-
-  const selectConv = (id: string) => {
-    setActiveConv(id);
-    setMessages([]);
-  };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chatId],
+  );
 
   const regenerate = () => {
     const lastUser = [...messages].reverse().find((m) => m.role === "user") as
@@ -160,16 +238,21 @@ function ChatPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 border-b border-white/5 px-3 py-2">
           <div className="text-xs font-medium text-muted-foreground">
-            {activeConv ? "Conversation" : messages.length > 0 ? "New chat" : "Start a conversation"}
+            {chatId ? "Conversation" : messages.length > 0 ? "New chat" : "Ask FarmGPT anything"}
           </div>
           <div className="ml-auto flex items-center gap-1.5 rounded-full border border-white/5 bg-white/[0.03] px-2.5 py-1 text-[10px] text-muted-foreground">
             <Sparkles className="h-3 w-3 text-accent" />
-            FarmGPT · v2 preview
+            FarmGPT · your farming assistant
           </div>
         </div>
 
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
-          {messages.length === 0 ? (
+          {loading ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading conversation…
+            </div>
+          ) : messages.length === 0 ? (
             <ChatEmptyState onPick={(q) => setPrompt(q)} />
           ) : (
             <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-6 md:py-8">
@@ -205,13 +288,10 @@ function ChatPage() {
               }}
               isStreaming={streaming}
               autoFocus
+              placeholder="Ask FarmGPT — try 'yellow spots on my tomato leaves' or tap 🎤 to speak"
             />
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              FarmGPT can make mistakes. Verify important agricultural decisions with an expert.
-              <span className="mx-2 text-muted-foreground/40">·</span>
-              <kbd className="rounded border border-white/10 bg-white/5 px-1 text-[10px]">Enter</kbd> to send ·{" "}
-              <kbd className="rounded border border-white/10 bg-white/5 px-1 text-[10px]">Shift + Enter</kbd> for
-              newline
+              💡 Tip: You can send a photo of a leaf, speak your question, or share your location for better advice.
             </p>
           </div>
         </div>

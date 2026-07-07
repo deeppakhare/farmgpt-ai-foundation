@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Mic, MapPin, ArrowUp, FileText, X, Square } from "lucide-react";
+import { ImagePlus, Mic, MapPin, ArrowUp, FileText, X, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 const MAX = 2000;
 const DEFAULT_PLACEHOLDER =
@@ -29,7 +31,11 @@ export function ChatComposer({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<any>(null);
   const [atts, setAtts] = useState<Attachment[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [locBusy, setLocBusy] = useState(false);
+
 
   useEffect(() => {
     const el = taRef.current;
@@ -60,6 +66,71 @@ export function ChatComposer({
     }));
     setAtts((prev) => [...prev, ...next]);
   };
+
+  const toggleVoice = () => {
+    const w = window as any;
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!SR) {
+      toast.error("Voice input is not supported in this browser. Try Chrome on desktop or Android.");
+      return;
+    }
+    if (recording) {
+      recRef.current?.stop();
+      return;
+    }
+    const rec = new SR();
+    rec.lang = navigator.language || "en-IN";
+    rec.interimResults = true;
+    rec.continuous = false;
+    let base = value ? value + " " : "";
+    rec.onresult = (ev: any) => {
+      let interim = "";
+      let finalText = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const t = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal) finalText += t;
+        else interim += t;
+      }
+      onChange((base + finalText + interim).slice(0, MAX));
+      if (finalText) base += finalText;
+    };
+    rec.onerror = (ev: any) => {
+      toast.error(`Voice error: ${ev.error || "unknown"}`);
+      setRecording(false);
+    };
+    rec.onend = () => setRecording(false);
+    recRef.current = rec;
+    setRecording(true);
+    try {
+      rec.start();
+      toast.message("Listening… speak now", { duration: 1500 });
+    } catch {
+      setRecording(false);
+    }
+  };
+
+  const addLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Location not available in this browser.");
+      return;
+    }
+    setLocBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const line = `📍 My location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        onChange(((value ? value + "\n" : "") + line).slice(0, MAX));
+        setLocBusy(false);
+        toast.success("Location added");
+      },
+      (err) => {
+        setLocBusy(false);
+        toast.error(err.message || "Could not get location");
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  };
+
 
   return (
     <div className="glass rounded-3xl p-2.5 shadow-card focus-within:ring-2 focus-within:ring-ring">
@@ -107,10 +178,11 @@ export function ChatComposer({
 
       <div className="flex items-center justify-between gap-2 px-1 pt-1">
         <div className="flex flex-wrap items-center gap-1">
-          <ToolBtn onClick={() => imgRef.current?.click()} icon={ImagePlus} label="Image" />
+          <ToolBtn onClick={() => imgRef.current?.click()} icon={ImagePlus} label="Photo" />
           <ToolBtn onClick={() => pdfRef.current?.click()} icon={FileText} label="PDF" />
-          <ToolBtn icon={Mic} label="Voice" />
-          <ToolBtn icon={MapPin} label="Location" />
+          <ToolBtn onClick={toggleVoice} icon={recording ? Square : Mic} label={recording ? "Stop" : "Voice"} active={recording} />
+          <ToolBtn onClick={addLocation} icon={locBusy ? Loader2 : MapPin} label="Location" busy={locBusy} />
+
           <input
             ref={imgRef}
             type="file"
@@ -170,17 +242,33 @@ export function ChatComposer({
   );
 }
 
-function ToolBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function ToolBtn({
+  icon: Icon,
+  label,
+  onClick,
+  active,
+  busy,
+}: {
+  icon: any;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  busy?: boolean;
+}) {
   return (
     <Button
       type="button"
       size="sm"
       variant="ghost"
       onClick={onClick}
-      className="h-8 gap-1.5 rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground"
+      className={cn(
+        "h-8 gap-1.5 rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground",
+        active && "bg-rose-500/15 text-rose-300 hover:bg-rose-500/20 hover:text-rose-200",
+      )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className={cn("h-4 w-4", busy && "animate-spin")} />
       <span className="hidden sm:inline">{label}</span>
     </Button>
   );
 }
+
