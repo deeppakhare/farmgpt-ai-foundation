@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Search,
   MessageSquare,
@@ -14,9 +14,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   LayoutDashboard,
-
+  Trash2,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
@@ -24,14 +26,9 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFarmer } from "@/hooks/useFarmer";
+import { listChats, searchChats, deleteChat, type ChatSummary } from "@/lib/chat/chat.functions";
+import { toast } from "sonner";
 
-const RECENT_CHATS = [
-  "Yellow spots on tomato leaves",
-  "Best fertilizer for wheat this season",
-  "Irrigation schedule for next week",
-  "Government subsidy for drip irrigation",
-  "Market price forecast — cotton",
-];
 
 const TOOLS_GROUP = {
   label: "Tools",
