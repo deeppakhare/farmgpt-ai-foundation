@@ -27,6 +27,6 @@ export interface AgentInput {
 export interface AgentResponse {
   agent: AgentName;
   content: string;
-  blocks?: unknown[];
+  blocks?: JsonValue[];
   data?: { [key: string]: JsonValue };
 }
