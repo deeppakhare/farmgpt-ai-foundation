@@ -33,27 +33,25 @@ const RECENT_CHATS = [
   "Market price forecast — cotton",
 ];
 
-const GROUPS = [
-  {
-    label: "Tools",
-    items: [
-      { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
-      { to: "/weather", label: "Weather", icon: CloudSun },
-      { to: "/farm-planner", label: "Farm Planner", icon: CalendarRange },
-      { to: "/market-intelligence", label: "Market Intelligence", icon: LineChart },
-      { to: "/reports", label: "Reports", icon: FileBarChart2 },
-      { to: "/command-center", label: "Command Center", icon: LayoutDashboard },
-    ],
-  },
+const TOOLS_GROUP = {
+  label: "Tools",
+  items: [
+    { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
+    { to: "/weather", label: "Weather", icon: CloudSun },
+    { to: "/farm-planner", label: "Farm Planner", icon: CalendarRange },
+    { to: "/market-intelligence", label: "Market Intelligence", icon: LineChart },
+    { to: "/reports", label: "Reports", icon: FileBarChart2 },
+    { to: "/command-center", label: "Command Center", icon: LayoutDashboard },
+  ],
+} as const;
 
-  {
-    label: "Farm",
-    items: [
-      { to: "/farm-profile", label: "Profile", icon: Tractor },
-      { to: "/settings", label: "Settings", icon: Settings },
-    ],
-  },
-] as const;
+const FARM_GROUP = {
+  label: "Farm",
+  items: [
+    { to: "/farm-profile", label: "Profile", icon: Tractor },
+    { to: "/settings", label: "Settings", icon: Settings },
+  ],
+} as const;
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
