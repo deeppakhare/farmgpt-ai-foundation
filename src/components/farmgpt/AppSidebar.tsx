@@ -37,12 +37,12 @@ const GROUPS = [
   {
     label: "Tools",
     items: [
-      { to: "/command-center", label: "Command Center", icon: LayoutDashboard },
       { to: "/disease-scanner", label: "Disease Scanner", icon: ScanLine },
       { to: "/weather", label: "Weather", icon: CloudSun },
       { to: "/farm-planner", label: "Farm Planner", icon: CalendarRange },
       { to: "/market-intelligence", label: "Market Intelligence", icon: LineChart },
       { to: "/reports", label: "Reports", icon: FileBarChart2 },
+      { to: "/command-center", label: "Command Center", icon: LayoutDashboard },
     ],
   },
 
