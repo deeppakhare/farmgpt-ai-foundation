@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/farmgpt/AuthShell";
 import { clearAuthRedirectParams, completeAuthRedirect } from "@/lib/auth-redirect";
 
-export const Route = createFileRoute("/auth/callback")({ component: AuthCallback });
+export const Route = createFileRoute("/auth/callback")({
+  ssr: false,
+  component: AuthCallback,
+});
 
 function AuthCallback() {
   const navigate = useNavigate();
