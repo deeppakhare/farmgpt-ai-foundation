@@ -64,6 +64,19 @@ const FAQ = [
 ];
 
 function Landing() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) navigate({ to: "/dashboard" });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        navigate({ to: "/dashboard" });
+      }
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
