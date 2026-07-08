@@ -335,7 +335,9 @@ flowchart LR
 
 | | |
 |---|---|
-| ![Landing](./screenshots/landing.png) | ![Dashboard](./screenshots/dashboard.png) |
+| ![Landing1](./screenshots/landing1.png) | ![Landing2](./screenshots/landing2.png) |
+| ![Landing3](./screenshots/landing3.png) | ![SignIn](./screenshots/signin.png) |
+| ![CreateAccount](./screenshots/createacc.png) | ![Dashboard](./screenshots/dashboard.png) |
 | ![AI Chat](./screenshots/chat.png) | ![Disease Scanner](./screenshots/disease-scanner.png) |
 | ![Farm Planner](./screenshots/planner.png) | ![Reports](./screenshots/reports.png) |
 | ![Market Intelligence](./screenshots/market.png) | ![Command Center](./screenshots/command-center.png) |
@@ -782,16 +784,17 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
 
 **Your Name** — Full-Stack & AI Engineer
 
-- 🐙 GitHub: [@your-username](https://github.com/your-username)
-- 💼 LinkedIn: [linkedin.com/in/your-handle](https://linkedin.com/in/your-handle)
-- 🌐 Portfolio: [your-portfolio.com](https://your-portfolio.com)
-- ✉️ Email: `your.email@example.com`
+- 🐙 GitHub: [@deeppakhare](https://github.com/deeppakhare)
+- 💼 LinkedIn: [linkedin.com/in/deeppakhare6669](https://linkedin.com/in/deeppakhare6669)
+- 🌐 Portfolio: [my-portfolio.com](https://assignment-1-cyan-iota.vercel.app/)
+- 🌐 Portfolio: [x.com/deep_pakhare](https://x.com/deep_pakhare)
+- ✉️ Email: `deeppakhare19@gmail.com`
 
 ---
 
 ## 🆘 Support
 
-- **Bugs** — open a [GitHub Issue](https://github.com/your-username/farmgpt-ai/issues) with reproduction steps, expected vs actual, and browser/OS info.
+- **Bugs** — open a [GitHub Issue](https://github.com/deeppakhare/farmgpt-ai/issues) with reproduction steps, expected vs actual, and browser/OS info.
 - **Feature requests** — open a Discussion.
 - **Security disclosures** — email the maintainer privately; please don't file public issues for security bugs.
 
