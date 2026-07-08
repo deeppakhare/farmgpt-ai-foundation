@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./screenshots/logo.png" alt="FarmGPT AI Logo" width="140" />
+<img src="./screenshots/logo.png" alt="FarmGPT AI Logo" width="600" height="1200" />
 
 # 🌾 FarmGPT AI
 
@@ -220,22 +220,55 @@ sequenceDiagram
 ```
 
 ### User Workflow
-
 ```mermaid
 flowchart LR
-    L[Landing /] --> A{Authed?}
-    A -- No --> LI[Login / Register]
-    LI --> CB[/auth/callback]
-    CB --> D[Dashboard]
-    A -- Yes --> D
-    D --> C[Chat]
-    D --> DS[Disease Scanner]
-    D --> FP[Farm Planner]
-    D --> CC[Command Center]
-    D --> M[Market]
-    D --> W[Weather]
-    D --> R[Reports]
-    D --> P[Farm Profile]
+
+    U([Farmer / User])
+
+    U --> AUTH{Login or Register}
+    AUTH -->|OAuth| SUPABASE[(Lovable Cloud Auth)]
+    SUPABASE --> DASHBOARD[Farm Dashboard]
+
+    DASHBOARD --> CHAT[AI Assistant Chat]
+    DASHBOARD --> SCANNER[Disease Scanner]
+    DASHBOARD --> MARKET[Market Intelligence]
+    DASHBOARD --> PLANNER[Farm Planner]
+    DASHBOARD --> WEATHER[Weather Advisory]
+    DASHBOARD --> REPORTS[Reports]
+    DASHBOARD --> PROFILE[Farm Profile]
+    DASHBOARD --> COMMAND[AI Command Center]
+    DASHBOARD --> SETTINGS[Settings]
+
+    CHAT --> ROUTER[Intent Router]
+    ROUTER --> GENERAL[General Agent]
+    ROUTER --> DISEASE[Disease Agent]
+    ROUTER --> MARKET_AGENT[Market Agent]
+    ROUTER --> WEATHER_AGENT[Weather Agent]
+    ROUTER --> FERTILIZER[Fertilizer Agent]
+    ROUTER --> GOV[Government Scheme Agent]
+
+    SCANNER --> DISEASE
+
+    GENERAL --> GEMINI[Lovable AI Gateway + Gemini]
+    DISEASE --> GEMINI
+    MARKET_AGENT --> GEMINI
+    WEATHER_AGENT --> GEMINI
+    FERTILIZER --> GEMINI
+    GOV --> GEMINI
+
+    GEMINI --> RESPONSE[Structured AI Response]
+
+    RESPONSE --> CHAT
+    RESPONSE --> REPORTS
+
+    MARKET --> PDF[Generate PDF Report]
+    PLANNER --> PDF[Generate PDF Report]
+    REPORTS --> PDF
+
+    style U fill:#3B82F6,stroke:#1E40AF,color:#fff
+    style GEMINI fill:#10B981,stroke:#047857,color:#fff
+    style PDF fill:#F59E0B,stroke:#B45309,color:#fff
+
 ```
 
 ### Request Flow (Typed RPC)
