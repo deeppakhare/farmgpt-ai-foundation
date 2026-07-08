@@ -1,0 +1,61 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement for FarmGPT AI
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea! 💡
+        Please describe the *user problem* first, then your proposed solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      placeholder: Farmers in low-connectivity areas can't use the app when they lose signal in the field.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      placeholder: Ship a PWA offline mode that caches the last 20 chat messages and queues new prompts for sync.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: SMS fallback, WhatsApp bot, native app.
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who benefits most?
+      multiple: true
+      options:
+        - Farmers
+        - Agronomists / advisors
+        - Admins / power users
+        - Developers / integrators
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Mockups, links, references, related issues.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checks
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have read the [Code of Conduct](../CODE_OF_CONDUCT.md).
+          required: true

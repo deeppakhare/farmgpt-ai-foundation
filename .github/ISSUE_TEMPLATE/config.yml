@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/your-username/farmgpt-ai/discussions
+    about: Ask a question, share ideas, or get help from the community.
+  - name: 🛡️ Security Vulnerability
+    url: https://github.com/your-username/farmgpt-ai/blob/main/SECURITY.md
+    about: Please do NOT open a public issue. See our security policy.
+  - name: 📖 Documentation
+    url: https://github.com/your-username/farmgpt-ai#readme
+    about: Read the project README before opening an issue.
