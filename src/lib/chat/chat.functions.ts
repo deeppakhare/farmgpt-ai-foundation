@@ -28,7 +28,7 @@ export const listChats = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .order("updated_at", { ascending: false })
       .limit(200);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     if (!chats?.length) return [] as ChatSummary[];
 
     // Fetch last user message as preview per chat (small N, one round-trip).
@@ -118,7 +118,7 @@ export const getChatMessages = createServerFn({ method: "POST" })
       .select("id, role, content, metadata, created_at")
       .eq("chat_id", data.chatId)
       .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
 
     const messages: ChatMessage[] = (rows ?? []).map((r) => {
       if (r.role === "user") {
@@ -147,7 +147,7 @@ export const createChat = createServerFn({ method: "POST" })
       .insert({ user_id: context.userId, title: data.title?.slice(0, 80) || "New chat" })
       .select("id, title, created_at, updated_at")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return row as { id: string; title: string; created_at: string; updated_at: string };
   });
 
@@ -174,7 +174,7 @@ export const appendMessage = createServerFn({ method: "POST" })
       })
       .select("id, created_at")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
 
     // Bump chat updated_at
     await context.supabase
@@ -197,7 +197,7 @@ export const renameChat = createServerFn({ method: "POST" })
       .update({ title })
       .eq("id", data.chatId)
       .eq("user_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true, title };
   });
 
@@ -211,6 +211,6 @@ export const deleteChat = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.chatId)
       .eq("user_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true };
   });
