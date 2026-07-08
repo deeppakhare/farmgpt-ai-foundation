@@ -9,6 +9,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { getAuthCallbackUrl } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -29,7 +30,7 @@ function Login() {
     setGoogleBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: getAuthCallbackUrl(),
       });
       if (result.error) {
         toast.error(result.error.message || "Google sign-in failed");

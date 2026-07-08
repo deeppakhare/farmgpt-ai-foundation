@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import type { ReactNode } from "react";
 
@@ -9,7 +8,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="mb-8 flex justify-center">
-            <Link to="/"><Logo size="lg" /></Link>
+            <Logo size="lg" />
           </div>
           <div className="glass rounded-2xl p-8 shadow-card">
             <div className="mb-6 text-center">
