@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/farmgpt/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAuthRedirectParams, completeAuthRedirect, hasAuthRedirectParams } from "@/lib/auth-redirect";
 import heroImg from "@/assets/hero-farm.jpg";
 
 export const Route = createFileRoute("/")({
@@ -67,12 +68,27 @@ function Landing() {
   const navigate = useNavigate();
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: "/dashboard" });
-    });
+    const goToDashboard = () => navigate({ to: "/dashboard", replace: true });
+
+    async function finishPendingSignIn() {
+      if (hasAuthRedirectParams()) {
+        const result = await completeAuthRedirect();
+        if (!active) return;
+        clearAuthRedirectParams("/");
+        if (result.ok) {
+          goToDashboard();
+          return;
+        }
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (active && data.session) goToDashboard();
+    }
+
+    finishPendingSignIn();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        navigate({ to: "/dashboard" });
+        goToDashboard();
       }
     });
     return () => { active = false; sub.subscription.unsubscribe(); };
