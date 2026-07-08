@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+          VITE_SUPABASE_PROJECT_ID: placeholder
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+          LOVABLE_API_KEY: placeholder
+        run: bun run build
+
+      - name: Package build output
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          mkdir -p release
+          if [ -d ".output" ]; then
+            tar -czf "release/farmgpt-ai-${tag}.tar.gz" .output
+          elif [ -d "dist" ]; then
+            tar -czf "release/farmgpt-ai-${tag}.tar.gz" dist
+          fi
+
+      - name: Extract changelog entry
+        id: changelog
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          awk -v tag="$tag" '
+            $0 ~ "^## \\[" tag "\\]" {flag=1; next}
+            flag && /^## \[/ {exit}
+            flag {print}
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${GITHUB_REF_NAME}" > release_notes.md
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "FarmGPT AI ${{ github.ref_name }}"
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            release/*.tar.gz
