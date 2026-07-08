@@ -37,7 +37,7 @@ export const listDiseaseScans = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return (data ?? []).map((r) => ({
       id: r.id as string,
       crop: (r.crop as string | null) ?? null,
@@ -71,7 +71,7 @@ export const saveDiseaseScan = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { id: row.id as string };
   });
 
@@ -84,6 +84,6 @@ export const deleteDiseaseScan = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("user_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true };
   });

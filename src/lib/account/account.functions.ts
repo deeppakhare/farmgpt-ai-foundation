@@ -6,6 +6,6 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true };
   });

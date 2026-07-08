@@ -51,7 +51,7 @@ export const saveReport = createServerFn({ method: "POST" })
       })
       .select("id, title, kind, summary, size_bytes, created_at")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return row as SavedReport;
   });
 
@@ -64,7 +64,7 @@ export const listReports = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(200);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return (data ?? []) as SavedReport[];
   });
 
@@ -78,7 +78,7 @@ export const getReportPdf = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     if (!row) throw new Error("Report not found");
     const payload = row.data as { pdfBase64?: string } | null;
     if (!payload?.pdfBase64) throw new Error("This report has no PDF attached");
@@ -94,7 +94,7 @@ export const deleteReport = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", context.userId)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true };
   });
 
@@ -108,7 +108,7 @@ export const logActivity = createServerFn({ method: "POST" })
       title: data.title,
       detail: data.detail ?? null,
     });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return { ok: true };
   });
 
@@ -121,6 +121,6 @@ export const listActivity = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(30);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[server-fn] DB error:", error.message); throw new Error("An unexpected error occurred. Please try again."); }
     return (data ?? []) as ActivityRow[];
   });
