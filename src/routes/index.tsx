@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import {
   ArrowRight, Sparkles, ScanLine, CloudSun, Landmark, LineChart,
   MessageSquare, ShieldCheck, Zap, Globe, Check,
@@ -9,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/farmgpt/Logo";
+import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/hero-farm.jpg";
 
 export const Route = createFileRoute("/")({
