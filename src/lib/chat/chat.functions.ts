@@ -163,6 +163,15 @@ export const appendMessage = createServerFn({ method: "POST" })
     }) => d,
   )
   .handler(async ({ data, context }) => {
+    // Verify chat ownership before inserting
+    const { data: chat } = await context.supabase
+      .from("chat_history")
+      .select("id")
+      .eq("id", data.chatId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!chat) throw new Error("Chat not found");
+
     const { data: row, error } = await context.supabase
       .from("chat_messages")
       .insert({
